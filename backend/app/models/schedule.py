@@ -34,6 +34,9 @@ class ScheduleAssignment(UUIDMixin, TimestampMixin, Base):
     status_color: Mapped[str | None] = mapped_column(String(20), nullable=True)  # off|pre_work|post_work|visit|custom
     is_locked: Mapped[bool] = mapped_column(Boolean, default=False)
     source: Mapped[str] = mapped_column(String(20), default="manual")  # manual | solver | imported
+    event_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("events.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     schedule: Mapped["Schedule"] = relationship(back_populates="assignments")
     staff: Mapped["Staff"] = relationship(back_populates="assignments")  # noqa: F821

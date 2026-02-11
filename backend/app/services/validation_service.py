@@ -6,11 +6,14 @@ from datetime import date
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.event import Event
 from app.models.resource import Resource, ResourceBooking
 from app.models.rule import Rule
 from app.models.schedule import ScheduleAssignment
 from app.models.staff import Staff, StaffSkill
 from app.models.task_type import TaskType
+
+WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"]
 
 
 async def check_duplicate_assignment(
@@ -286,6 +289,179 @@ async def _check_consecutive_work(db: AsyncSession, schedule_id) -> list[dict]:
     return violations
 
 
+async def _check_required_events(db: AsyncSession, schedule_id) -> list[dict]:
+    """Check that all required-priority events have been assigned (have assignment with event_id)."""
+    violations = []
+
+    event_result = await db.execute(
+        select(Event).where(
+            Event.schedule_id == schedule_id,
+            Event.priority == "required",
+            Event.status.notin_(["hold", "done"]),
+        )
+    )
+    required_events = list(event_result.scalars().all())
+    if not required_events:
+        return violations
+
+    # Get all event_ids that appear in assignments for this schedule
+    assign_result = await db.execute(
+        select(ScheduleAssignment.event_id).where(
+            ScheduleAssignment.schedule_id == schedule_id,
+            ScheduleAssignment.event_id.isnot(None),
+        )
+    )
+    assigned_event_ids = {row[0] for row in assign_result.all()}
+
+    for event in required_events:
+        if event.id not in assigned_event_ids:
+            desc_parts = []
+            if event.type_code:
+                desc_parts.append(event.type_code)
+            if event.subject_name:
+                desc_parts.append(event.subject_name)
+            label = " / ".join(desc_parts) if desc_parts else str(event.id)[:8]
+            violations.append({
+                "type": "hard",
+                "description": f"必須イベント未配置: {label}",
+                "affected_date": None,
+                "affected_time_block": None,
+                "affected_staff": [],
+                "severity": 950,
+                "suggestion": "このイベントをスケジュールに配置してください。",
+                "event_id": str(event.id),
+            })
+
+    return violations
+
+
+async def _check_event_constraints(db: AsyncSession, schedule_id) -> list[dict]:
+    """Check that event-bearing assignments have staff with required skills."""
+    violations = []
+
+    # Get all assignments with event_id
+    assign_result = await db.execute(
+        select(ScheduleAssignment).where(
+            ScheduleAssignment.schedule_id == schedule_id,
+            ScheduleAssignment.event_id.isnot(None),
+        )
+    )
+    event_assignments = list(assign_result.scalars().all())
+    if not event_assignments:
+        return violations
+
+    # Load events
+    event_ids = {a.event_id for a in event_assignments}
+    event_result = await db.execute(
+        select(Event).where(Event.id.in_(event_ids))
+    )
+    event_map = {e.id: e for e in event_result.scalars().all()}
+
+    # Load staff skills
+    staff_ids = {a.staff_id for a in event_assignments}
+    skill_result = await db.execute(
+        select(StaffSkill).where(StaffSkill.staff_id.in_(staff_ids))
+    )
+    staff_skills_map: dict[str, set[str]] = defaultdict(set)
+    for ss in skill_result.scalars().all():
+        staff_skills_map[str(ss.staff_id)].add(ss.skill_code)
+
+    # Load staff names
+    staff_result = await db.execute(select(Staff).where(Staff.id.in_(staff_ids)))
+    staff_names = {str(s.id): s.name for s in staff_result.scalars().all()}
+
+    # Check each assignment
+    seen: set[tuple[str, str]] = set()  # (event_id, staff_id) deduplicate across blocks
+    for a in event_assignments:
+        event = event_map.get(a.event_id)
+        if not event:
+            continue
+        key = (str(a.event_id), str(a.staff_id))
+        if key in seen:
+            continue
+        seen.add(key)
+
+        required = event.required_skills or []
+        if not required:
+            continue
+        s_skills = staff_skills_map.get(str(a.staff_id), set())
+        missing = [r for r in required if r not in s_skills]
+        if missing:
+            staff_name = staff_names.get(str(a.staff_id), "不明")
+            violations.append({
+                "type": "hard",
+                "description": (
+                    f"イベントスキル不足: {staff_name}にイベント({event.type_code or '?'})の"
+                    f"必須スキル({', '.join(missing)})がありません"
+                ),
+                "affected_date": str(a.date),
+                "affected_time_block": a.time_block,
+                "affected_staff": [str(a.staff_id)],
+                "severity": 900,
+                "suggestion": f"必須スキル{', '.join(missing)}を持つ職員に変更してください。",
+                "event_id": str(event.id),
+            })
+
+    return violations
+
+
+async def _check_resource_capacity_schedule(db: AsyncSession, schedule_id) -> list[dict]:
+    """Check resource capacity limits for all bookings in this schedule."""
+    violations = []
+
+    # Get assignments for this schedule
+    assign_result = await db.execute(
+        select(ScheduleAssignment.id).where(
+            ScheduleAssignment.schedule_id == schedule_id,
+        )
+    )
+    assignment_ids = [row[0] for row in assign_result.all()]
+    if not assignment_ids:
+        return violations
+
+    # Get bookings for these assignments
+    booking_result = await db.execute(
+        select(ResourceBooking).where(
+            ResourceBooking.assignment_id.in_(assignment_ids)
+        )
+    )
+    bookings = list(booking_result.scalars().all())
+    if not bookings:
+        return violations
+
+    # Load resources
+    resource_ids = {b.resource_id for b in bookings}
+    res_result = await db.execute(
+        select(Resource).where(Resource.id.in_(resource_ids))
+    )
+    resource_map = {r.id: r for r in res_result.scalars().all()}
+
+    # Group bookings by (resource_id, date, time_block) and count
+    grouped: dict[tuple, int] = defaultdict(int)
+    for b in bookings:
+        grouped[(b.resource_id, str(b.date), b.time_block)] += 1
+
+    for (rid, date_str, tb), count in grouped.items():
+        resource = resource_map.get(rid)
+        if not resource:
+            continue
+        if count > resource.capacity:
+            violations.append({
+                "type": "hard",
+                "description": (
+                    f"リソース容量超過: {resource.name}({resource.type}) {date_str} {tb}"
+                    f" — {count}/{resource.capacity}"
+                ),
+                "affected_date": date_str,
+                "affected_time_block": tb,
+                "affected_staff": [],
+                "severity": 850,
+                "suggestion": f"リソース{resource.name}の予約を{resource.capacity}件以下に減らしてください。",
+            })
+
+    return violations
+
+
 async def _check_rules(db: AsyncSession, schedule_id) -> list[dict]:
     """Check active rules against the schedule assignments."""
     violations = []
@@ -334,6 +510,10 @@ def _evaluate_rule(
         return _eval_availability_rule(rule, assignments, staff_map)
     elif rule_type == "preference":
         return _eval_preference_rule(rule, assignments, staff_map)
+    elif rule_type == "recurring":
+        return _eval_recurring_rule(rule, assignments, task_type_map)
+    elif rule_type == "specific_date":
+        return _eval_specific_date_rule(rule, assignments, staff_map, task_type_map)
     return []
 
 
@@ -463,6 +643,138 @@ def _eval_preference_rule(rule: Rule, assignments: list, staff_map: dict) -> lis
     return violations
 
 
+def _eval_recurring_rule(
+    rule: Rule,
+    assignments: list,
+    task_type_map: dict,
+) -> list[dict]:
+    """Evaluate recurring-type rules (e.g., 'every Tuesday AM needs 2 daycare staff')."""
+    violations = []
+    body = rule.body or {}
+
+    weekdays = body.get("weekdays", [])  # list of int (0=Mon..6=Sun)
+    task_code = body.get("task_type_code")
+    min_staff = body.get("min_staff", 0)
+    time_blocks = body.get("time_blocks", [])  # list of time_block strings
+
+    if not weekdays or not task_code:
+        return violations
+
+    from datetime import date as date_type
+
+    # Group assignments by (date, time_block) for the matching task_code
+    grouped: dict[tuple[str, str], int] = defaultdict(int)
+    all_slots: set[tuple[str, str]] = set()
+
+    for a in assignments:
+        d = a.date if isinstance(a.date, date_type) else date_type.fromisoformat(str(a.date))
+        if d.weekday() not in weekdays:
+            continue
+        if time_blocks and a.time_block not in time_blocks:
+            continue
+        all_slots.add((str(a.date), a.time_block))
+        if a.task_type_code == task_code:
+            grouped[(str(a.date), a.time_block)] += 1
+
+    # Check all affected slots for understaffing
+    for (date_str, tb) in all_slots:
+        count = grouped.get((date_str, tb), 0)
+        if min_staff and count < min_staff:
+            tt = task_type_map.get(task_code)
+            display = tt.display_name if tt else task_code
+            violations.append({
+                "type": rule.hard_or_soft,
+                "description": (
+                    f"ルール違反「{rule.natural_text}」: {date_str} {tb} の"
+                    f"{display}に{count}名（最低{min_staff}名必要）"
+                ),
+                "affected_date": date_str,
+                "affected_time_block": tb,
+                "affected_staff": [],
+                "severity": rule.weight if rule.hard_or_soft == "soft" else 1000,
+                "suggestion": f"あと{min_staff - count}名追加してください。",
+                "rule_id": str(rule.id),
+            })
+
+    return violations
+
+
+def _eval_specific_date_rule(
+    rule: Rule,
+    assignments: list,
+    staff_map: dict,
+    task_type_map: dict,
+) -> list[dict]:
+    """Evaluate specific_date rules (e.g., 'on 2025-05-15 PM, need 3 daycare staff incl. 山田')."""
+    violations = []
+    body = rule.body or {}
+
+    target_date = body.get("date")
+    task_code = body.get("task_type_code")
+    min_staff = body.get("min_staff", 0)
+    required_staff_names = body.get("required_staff_names", [])
+    time_block = body.get("time_block")
+
+    if not target_date:
+        return violations
+
+    from datetime import date as date_type
+
+    # Filter assignments for this date (and optionally time_block)
+    matched: list = []
+    for a in assignments:
+        d = a.date if isinstance(a.date, date_type) else date_type.fromisoformat(str(a.date))
+        if str(d) != str(target_date):
+            continue
+        if time_block and a.time_block != time_block:
+            continue
+        if task_code and a.task_type_code != task_code:
+            continue
+        matched.append(a)
+
+    # Check min_staff
+    if min_staff and len(matched) < min_staff:
+        tt = task_type_map.get(task_code) if task_code else None
+        display = tt.display_name if tt else (task_code or "業務")
+        violations.append({
+            "type": rule.hard_or_soft,
+            "description": (
+                f"ルール違反「{rule.natural_text}」: {target_date}"
+                f"{' ' + time_block if time_block else ''} の"
+                f"{display}に{len(matched)}名（最低{min_staff}名必要）"
+            ),
+            "affected_date": str(target_date),
+            "affected_time_block": time_block,
+            "affected_staff": [str(a.staff_id) for a in matched],
+            "severity": rule.weight if rule.hard_or_soft == "soft" else 1000,
+            "suggestion": f"あと{min_staff - len(matched)}名追加してください。",
+            "rule_id": str(rule.id),
+        })
+
+    # Check required_staff_names
+    if required_staff_names:
+        assigned_staff_ids = {str(a.staff_id) for a in matched}
+        assigned_names = {staff_map[sid].name for sid in assigned_staff_ids if sid in staff_map}
+        for name in required_staff_names:
+            if name not in assigned_names:
+                violations.append({
+                    "type": rule.hard_or_soft,
+                    "description": (
+                        f"ルール違反「{rule.natural_text}」: {target_date}"
+                        f"{' ' + time_block if time_block else ''} に"
+                        f"{name}が割り当てられていません"
+                    ),
+                    "affected_date": str(target_date),
+                    "affected_time_block": time_block,
+                    "affected_staff": [],
+                    "severity": rule.weight if rule.hard_or_soft == "soft" else 1000,
+                    "suggestion": f"{name}をこの枠に割り当ててください。",
+                    "rule_id": str(rule.id),
+                })
+
+    return violations
+
+
 async def validate_schedule(db: AsyncSession, schedule_id) -> list[dict]:
     """Run all validation checks on a schedule. Returns list of violations."""
     violations = []
@@ -484,5 +796,14 @@ async def validate_schedule(db: AsyncSession, schedule_id) -> list[dict]:
 
     # 6. Custom rules from rules table
     violations.extend(await _check_rules(db, schedule_id))
+
+    # 7. Required events unassigned (hard)
+    violations.extend(await _check_required_events(db, schedule_id))
+
+    # 8. Event skill constraints (hard)
+    violations.extend(await _check_event_constraints(db, schedule_id))
+
+    # 9. Resource capacity (hard)
+    violations.extend(await _check_resource_capacity_schedule(db, schedule_id))
 
     return violations
