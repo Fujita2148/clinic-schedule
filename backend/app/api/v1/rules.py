@@ -143,3 +143,42 @@ async def parse_rule_text(
 
     parsed = await parse_rule_from_text(request.text, task_types, staff_names, existing_rules)
     return NlpRuleParseResponse(parsed=parsed)
+
+
+@router.get("/search", response_model=list[RuleResponse])
+async def search_rules(
+    q: str = Query(..., min_length=1, description="検索クエリ"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Search rules by natural_text, template_type, or tags (full-text)."""
+    result = await db.execute(
+        select(Rule).order_by(Rule.created_at.desc())
+    )
+    all_rules = result.scalars().all()
+
+    query_lower = q.lower()
+    keywords = query_lower.split()
+
+    scored: list[tuple[int, Rule]] = []
+    for rule in all_rules:
+        score = 0
+        text_lower = (rule.natural_text or "").lower()
+        type_lower = (rule.template_type or "").lower()
+        tags_lower = " ".join(rule.tags or []).lower()
+        body_str = str(rule.body or {}).lower()
+
+        for kw in keywords:
+            if kw in text_lower:
+                score += 3
+            if kw in type_lower:
+                score += 2
+            if kw in tags_lower:
+                score += 2
+            if kw in body_str:
+                score += 1
+
+        if score > 0:
+            scored.append((score, rule))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [rule for _, rule in scored[:20]]

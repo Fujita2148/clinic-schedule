@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Schedule, NlpParsedEvent } from "@/lib/types";
-import { getExportCsvUrl, parseEventFromText, createEvent } from "@/lib/api";
+import { getExportCsvUrl, getExportExcelUrl, getExportPdfUrl, parseEventFromText, createEvent } from "@/lib/api";
 
 interface Props {
   schedules: Schedule[];
@@ -175,13 +175,29 @@ export function GridToolbar({
         </button>
 
         {currentSchedule && (
-          <a
-            href={getExportCsvUrl(currentSchedule.id)}
-            download
-            className="border border-gray-300 px-3 py-1.5 rounded text-sm hover:bg-gray-50"
-          >
-            CSV出力
-          </a>
+          <div className="flex items-center border border-gray-300 rounded overflow-hidden">
+            <a
+              href={getExportCsvUrl(currentSchedule.id)}
+              download
+              className="px-2.5 py-1.5 text-sm hover:bg-gray-50 border-r border-gray-300"
+            >
+              CSV
+            </a>
+            <a
+              href={getExportExcelUrl(currentSchedule.id)}
+              download
+              className="px-2.5 py-1.5 text-sm hover:bg-gray-50 border-r border-gray-300"
+            >
+              Excel
+            </a>
+            <a
+              href={getExportPdfUrl(currentSchedule.id)}
+              download
+              className="px-2.5 py-1.5 text-sm hover:bg-gray-50"
+            >
+              PDF
+            </a>
+          </div>
         )}
       </div>
 

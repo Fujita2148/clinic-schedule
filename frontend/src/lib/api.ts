@@ -191,6 +191,14 @@ export const explainViolations = (scheduleId: string) =>
     method: "POST",
   });
 
+// Rules — search
+export const searchRules = (q: string) =>
+  fetchJson<Rule[]>(`/rules/search?q=${encodeURIComponent(q)}`);
+
 // Export
 export const getExportCsvUrl = (scheduleId: string) =>
   `${API_BASE}/schedules/${scheduleId}/export/csv`;
+export const getExportExcelUrl = (scheduleId: string) =>
+  `${API_BASE}/schedules/${scheduleId}/export/excel`;
+export const getExportPdfUrl = (scheduleId: string) =>
+  `${API_BASE}/schedules/${scheduleId}/export/pdf`;

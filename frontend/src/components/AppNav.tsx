@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: "/task-types", label: "業務コード管理" },
   { href: "/events", label: "イベント管理" },
   { href: "/rules", label: "ルール管理" },
+  { href: "/reports", label: "レポート" },
 ];
 
 export function AppNav() {

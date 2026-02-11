@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { RuleFormModal } from "@/components/RuleFormModal";
-import { getRules, toggleRule, deleteRule, parseRuleFromText, createRule } from "@/lib/api";
+import { getRules, toggleRule, deleteRule, parseRuleFromText, createRule, searchRules } from "@/lib/api";
 import type { Rule, NlpParsedRule } from "@/lib/types";
 
 const TEMPLATE_LABELS: Record<string, string> = {
@@ -21,6 +21,11 @@ export default function RulesPage() {
   const [editing, setEditing] = useState<Rule | null | "new">(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Rule[] | null>(null);
+  const [searching, setSearching] = useState(false);
 
   // NLP input state
   const [nlpText, setNlpText] = useState("");
@@ -107,7 +112,28 @@ export default function RulesPage() {
     }
   }
 
-  const filtered = showInactive ? rules : rules.filter((r) => r.is_active);
+  async function handleSearch() {
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      return;
+    }
+    setSearching(true);
+    try {
+      const results = await searchRules(searchQuery.trim());
+      setSearchResults(results);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "検索エラー");
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  function handleClearSearch() {
+    setSearchQuery("");
+    setSearchResults(null);
+  }
+
+  const displayRules = searchResults ?? (showInactive ? rules : rules.filter((r) => r.is_active));
 
   if (loading) {
     return (
@@ -145,6 +171,33 @@ export default function RulesPage() {
             + 新規作成
           </button>
         </div>
+      </div>
+
+      {/* Search bar */}
+      <div className="flex items-center gap-2 mb-3">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+          placeholder="ルール検索... (例: デイケア, 火曜, 訪問)"
+          className="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+        <button
+          onClick={handleSearch}
+          disabled={searching}
+          className="border border-gray-300 px-3 py-1.5 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
+        >
+          {searching ? "検索中..." : "検索"}
+        </button>
+        {searchResults !== null && (
+          <button
+            onClick={handleClearSearch}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            クリア ({searchResults.length}件)
+          </button>
+        )}
       </div>
 
       {/* NLP natural text input for rules */}
@@ -243,7 +296,7 @@ export default function RulesPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((rule) => (
+            {displayRules.map((rule) => (
               <tr
                 key={rule.id}
                 className={`border-b border-gray-100 hover:bg-gray-50 ${
@@ -308,7 +361,7 @@ export default function RulesPage() {
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {displayRules.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-3 py-8 text-center text-gray-400">
                   ルールが登録されていません
