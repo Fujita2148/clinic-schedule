@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { RuleFormModal } from "@/components/RuleFormModal";
-import { getRules, toggleRule, deleteRule } from "@/lib/api";
-import type { Rule } from "@/lib/types";
+import { getRules, toggleRule, deleteRule, parseRuleFromText, createRule } from "@/lib/api";
+import type { Rule, NlpParsedRule } from "@/lib/types";
 
 const TEMPLATE_LABELS: Record<string, string> = {
   headcount: "人員配置",
@@ -21,6 +21,13 @@ export default function RulesPage() {
   const [editing, setEditing] = useState<Rule | null | "new">(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // NLP input state
+  const [nlpText, setNlpText] = useState("");
+  const [nlpParsing, setNlpParsing] = useState(false);
+  const [nlpParsed, setNlpParsed] = useState<NlpParsedRule | null>(null);
+  const [nlpError, setNlpError] = useState<string | null>(null);
+  const [nlpConfirming, setNlpConfirming] = useState(false);
 
   useEffect(() => {
     loadRules();
@@ -62,6 +69,44 @@ export default function RulesPage() {
     await loadRules();
   }
 
+  async function handleNlpParse() {
+    if (!nlpText.trim()) return;
+    setNlpParsing(true);
+    setNlpError(null);
+    setNlpParsed(null);
+    try {
+      const res = await parseRuleFromText(nlpText.trim());
+      setNlpParsed(res.parsed);
+    } catch (err) {
+      setNlpError(err instanceof Error ? err.message : "解析エラー");
+    } finally {
+      setNlpParsing(false);
+    }
+  }
+
+  async function handleNlpConfirm() {
+    if (!nlpParsed) return;
+    setNlpConfirming(true);
+    setNlpError(null);
+    try {
+      await createRule({
+        natural_text: nlpParsed.natural_text,
+        template_type: nlpParsed.template_type,
+        hard_or_soft: nlpParsed.hard_or_soft,
+        weight: nlpParsed.weight,
+        body: nlpParsed.body,
+        tags: nlpParsed.tags,
+      });
+      setNlpText("");
+      setNlpParsed(null);
+      await loadRules();
+    } catch (err) {
+      setNlpError(err instanceof Error ? err.message : "作成エラー");
+    } finally {
+      setNlpConfirming(false);
+    }
+  }
+
   const filtered = showInactive ? rules : rules.filter((r) => r.is_active);
 
   if (loading) {
@@ -100,6 +145,80 @@ export default function RulesPage() {
             + 新規作成
           </button>
         </div>
+      </div>
+
+      {/* NLP natural text input for rules */}
+      <div className="bg-indigo-50 border border-indigo-200 rounded p-3 mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-indigo-600 font-medium whitespace-nowrap">AI入力:</span>
+          <input
+            type="text"
+            value={nlpText}
+            onChange={(e) => setNlpText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleNlpParse(); }}
+            placeholder="例: 毎週火曜と木曜の午後にデイケアは2名以上必要"
+            disabled={nlpParsing}
+            className="flex-1 border border-indigo-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+          <button
+            onClick={handleNlpParse}
+            disabled={nlpParsing || !nlpText.trim()}
+            className="bg-indigo-600 text-white px-3 py-1.5 rounded text-sm hover:bg-indigo-700 disabled:opacity-50 whitespace-nowrap"
+          >
+            {nlpParsing ? "解析中..." : "送信"}
+          </button>
+        </div>
+
+        {nlpError && (
+          <div className="mt-2 text-xs text-red-600">{nlpError}</div>
+        )}
+
+        {nlpParsed && (
+          <div className="mt-3 bg-white border border-indigo-200 rounded p-3">
+            <div className="text-sm font-medium text-gray-700 mb-2">解析結果:</div>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+              <dt className="text-gray-500">ルール文</dt>
+              <dd>{nlpParsed.natural_text}</dd>
+              <dt className="text-gray-500">種別</dt>
+              <dd>{TEMPLATE_LABELS[nlpParsed.template_type] || nlpParsed.template_type}</dd>
+              <dt className="text-gray-500">制約</dt>
+              <dd>
+                {nlpParsed.hard_or_soft === "hard" ? (
+                  <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded">必須</span>
+                ) : (
+                  <span className="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded">
+                    推奨 (重み:{nlpParsed.weight})
+                  </span>
+                )}
+              </dd>
+              <dt className="text-gray-500">詳細</dt>
+              <dd className="text-xs text-gray-600 font-mono">
+                {JSON.stringify(nlpParsed.body)}
+              </dd>
+              {nlpParsed.tags.length > 0 && (
+                <>
+                  <dt className="text-gray-500">タグ</dt>
+                  <dd>{nlpParsed.tags.join(", ")}</dd>
+                </>
+              )}
+            </dl>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={handleNlpConfirm}
+                disabled={nlpConfirming}
+                className="bg-green-600 text-white px-4 py-1.5 rounded text-sm hover:bg-green-700 disabled:opacity-50"
+              >
+                {nlpConfirming ? "作成中..." : "確定"}
+              </button>
+              <button
+                onClick={() => setNlpParsed(null)}
+                className="border border-gray-300 px-4 py-1.5 rounded text-sm hover:bg-gray-50"
+              >
+                キャンセル
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (

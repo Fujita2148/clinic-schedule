@@ -13,6 +13,8 @@ interface Props {
   onUpdateStatus?: (status: string) => void;
   onSolve?: () => void;
   solving?: boolean;
+  onMultiSolve?: () => void;
+  multiSolving?: boolean;
   onEventCreated?: () => void;
 }
 
@@ -25,6 +27,8 @@ export function GridToolbar({
   onUpdateStatus,
   onSolve,
   solving,
+  onMultiSolve,
+  multiSolving,
   onEventCreated,
 }: Props) {
   const [nlpText, setNlpText] = useState("");
@@ -142,13 +146,24 @@ export function GridToolbar({
       )}
 
       {currentSchedule && status !== "confirmed" && onSolve && (
-        <button
-          onClick={onSolve}
-          disabled={solving}
-          className="bg-purple-600 text-white px-3 py-1.5 rounded text-sm hover:bg-purple-700 disabled:opacity-50"
-        >
-          {solving ? "生成中..." : "案生成"}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onSolve}
+            disabled={solving || multiSolving}
+            className="bg-purple-600 text-white px-3 py-1.5 rounded-l text-sm hover:bg-purple-700 disabled:opacity-50"
+          >
+            {solving ? "生成中..." : "案生成"}
+          </button>
+          {onMultiSolve && (
+            <button
+              onClick={onMultiSolve}
+              disabled={solving || multiSolving}
+              className="bg-purple-500 text-white px-3 py-1.5 rounded-r text-sm hover:bg-purple-600 disabled:opacity-50 border-l border-purple-700"
+            >
+              {multiSolving ? "比較中..." : "A/B/C比較"}
+            </button>
+          )}
+        </div>
       )}
 
       <div className="flex items-center gap-2 ml-auto">

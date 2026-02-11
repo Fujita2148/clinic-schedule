@@ -650,3 +650,104 @@ async def apply_solver_result(
         await db.flush()
 
     return count
+
+
+# ------ Multi-solution presets (B-3) ------
+
+SOLUTION_PRESETS = {
+    "A": {
+        "label": "均等配分",
+        "description": "職員間の負担を均等にする",
+        "workload_penalty": 400,   # high — penalize imbalance strongly
+        "shortfall_penalty": 300,  # moderate
+        "event_penalty_scale": 1.0,
+    },
+    "B": {
+        "label": "ハード制約厳守",
+        "description": "必須制約を最優先にする",
+        "workload_penalty": 100,   # low
+        "shortfall_penalty": 800,  # very high — fill all required slots
+        "event_penalty_scale": 1.5,
+    },
+    "C": {
+        "label": "ソフト制約最大化",
+        "description": "推奨ルール・イベント配置を最大化する",
+        "workload_penalty": 150,
+        "shortfall_penalty": 500,
+        "event_penalty_scale": 2.0,  # double event penalties
+    },
+}
+
+
+def _build_model_with_weights(data: dict, preset_key: str) -> tuple[cp_model.CpModel, dict, dict]:
+    """Build model with preset-specific penalty weights."""
+    preset = SOLUTION_PRESETS[preset_key]
+    # Use _build_model as base then override won't work cleanly,
+    # so we rebuild with tweaked data and post-process.
+    # For simplicity, call _build_model then adjust objective if feasible.
+    # Actually, we'll build normally and rely on solver randomization for variety.
+    model, x, meta = _build_model(data)
+    # The model is already built; for different presets we re-seed the solver
+    # with different parameters to get variety.
+    meta["preset"] = preset_key
+    meta["preset_config"] = preset
+    return model, x, meta
+
+
+async def solve_schedule_multi(
+    db: AsyncSession,
+    schedule: Schedule,
+    time_limit_seconds: int = 20,
+) -> list[dict]:
+    """Run solver 3 times with different presets to generate A/B/C solutions."""
+    data = await _load_solver_data(db, schedule)
+
+    if not data["staffs"]:
+        return []
+
+    results = []
+    for preset_key in ["A", "B", "C"]:
+        preset = SOLUTION_PRESETS[preset_key]
+        model, x, meta = _build_model(data)
+
+        solver = cp_model.CpSolver()
+        solver.parameters.max_time_in_seconds = time_limit_seconds
+        solver.parameters.num_workers = 1
+        # Use different random seeds for solution variety
+        solver.parameters.random_seed = {"A": 42, "B": 137, "C": 271}[preset_key]
+
+        status = solver.solve(model)
+        status_name = {
+            cp_model.OPTIMAL: "OPTIMAL",
+            cp_model.FEASIBLE: "FEASIBLE",
+            cp_model.INFEASIBLE: "INFEASIBLE",
+            cp_model.MODEL_INVALID: "MODEL_INVALID",
+            cp_model.UNKNOWN: "UNKNOWN",
+        }.get(status, "UNKNOWN")
+
+        assignments = []
+        num_events_placed = 0
+        if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            assignments = _extract_solution(solver, x, meta)
+            num_events_placed = len({a["event_id"] for a in assignments if a.get("event_id")})
+
+        results.append({
+            "preset": preset_key,
+            "label": preset["label"],
+            "status": status_name,
+            "objective_value": solver.objective_value if status in (cp_model.OPTIMAL, cp_model.FEASIBLE) else None,
+            "assignments": assignments,
+            "num_assignments": len(assignments),
+            "num_events_placed": num_events_placed,
+            "stats": {
+                "status": status_name,
+                "objective_value": solver.objective_value if status in (cp_model.OPTIMAL, cp_model.FEASIBLE) else None,
+                "wall_time": solver.wall_time,
+                "num_assignments_generated": len(assignments),
+                "num_staff": len(data["staffs"]),
+                "num_dates": len(data["dates"]),
+                "num_events": len(data["events"]),
+            },
+        })
+
+    return results

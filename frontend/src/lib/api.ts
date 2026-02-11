@@ -2,7 +2,10 @@ import type {
   ClinicEvent,
   ColorLegendItem,
   GridData,
+  MultiSolveResponse,
+  NlpExplainResponse,
   NlpParseResponse,
+  NlpRuleParseResponse,
   Rule,
   Schedule,
   SkillMasterItem,
@@ -134,6 +137,11 @@ export const toggleRule = (ruleId: string) =>
   fetchJson<Rule>(`/rules/${ruleId}/toggle`, { method: "PATCH" });
 export const deleteRule = (ruleId: string) =>
   fetch(`${API_BASE}/rules/${ruleId}`, { method: "DELETE" });
+export const parseRuleFromText = (text: string) =>
+  fetchJson<NlpRuleParseResponse>("/rules/from-text", {
+    method: "POST",
+    body: JSON.stringify({ text }),
+  });
 
 // Events
 export const getEvents = (params?: { status?: string; schedule_id?: string; type_code?: string }) => {
@@ -163,6 +171,24 @@ export const runSolver = (scheduleId: string, options?: { time_limit_seconds?: n
   fetchJson<SolveResponse>(`/schedules/${scheduleId}/solve`, {
     method: "POST",
     body: JSON.stringify(options || {}),
+  });
+
+// Solver — multi-solution
+export const runMultiSolve = (scheduleId: string, options?: { time_limit_seconds?: number }) =>
+  fetchJson<MultiSolveResponse>(`/schedules/${scheduleId}/solve/solutions`, {
+    method: "POST",
+    body: JSON.stringify(options || {}),
+  });
+export const applySolution = (scheduleId: string, preset: string) =>
+  fetchJson<{ status: string; preset: string; num_assignments: number; message: string }>(
+    `/schedules/${scheduleId}/solve/solutions/${preset}/apply`,
+    { method: "POST" },
+  );
+
+// Violations — AI explain
+export const explainViolations = (scheduleId: string) =>
+  fetchJson<NlpExplainResponse>(`/schedules/${scheduleId}/violations/explain`, {
+    method: "POST",
   });
 
 // Export

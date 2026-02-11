@@ -5,6 +5,7 @@ import { ShiftGrid } from "@/components/ShiftGrid";
 import { GridToolbar } from "@/components/GridToolbar";
 import { ColorLegend } from "@/components/ColorLegend";
 import { ViolationsPanel } from "@/components/ViolationsPanel";
+import { SolutionCompare } from "@/components/SolutionCompare";
 import {
   getSchedules,
   createSchedule,
@@ -15,6 +16,7 @@ import {
   checkViolations,
   updateScheduleStatus,
   runSolver,
+  runMultiSolve,
 } from "@/lib/api";
 import type {
   Schedule,
@@ -22,6 +24,7 @@ import type {
   ColorLegendItem,
   TaskType,
   Violation,
+  SolutionSummary,
 } from "@/lib/types";
 
 export default function Home() {
@@ -34,6 +37,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [violationLoading, setViolationLoading] = useState(false);
   const [solving, setSolving] = useState(false);
+  const [multiSolving, setMultiSolving] = useState(false);
+  const [solutions, setSolutions] = useState<SolutionSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Get current year-month
@@ -126,6 +131,24 @@ export default function Home() {
     }
   }
 
+  async function handleMultiSolve() {
+    if (!currentSchedule) return;
+    try {
+      setMultiSolving(true);
+      const result = await runMultiSolve(currentSchedule.id);
+      setSolutions(result.solutions);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "複数案生成エラー");
+    } finally {
+      setMultiSolving(false);
+    }
+  }
+
+  async function handleSolutionApplied() {
+    setSolutions(null);
+    await refreshGrid();
+  }
+
   async function handleUpdateStatus(newStatus: string) {
     if (!currentSchedule) return;
     if (newStatus === "confirmed" && !confirm("スケジュールを確定しますか？確定後は編集できません。")) return;
@@ -160,6 +183,8 @@ export default function Home() {
         onUpdateStatus={handleUpdateStatus}
         onSolve={handleSolve}
         solving={solving}
+        onMultiSolve={handleMultiSolve}
+        multiSolving={multiSolving}
       />
 
       {error && (
@@ -204,10 +229,21 @@ export default function Home() {
           violations={violations}
           onCheck={handleCheckViolations}
           loading={violationLoading}
+          scheduleId={currentSchedule.id}
         />
       )}
 
       <ColorLegend items={colorLegend} />
+
+      {/* Solution compare modal */}
+      {solutions && currentSchedule && (
+        <SolutionCompare
+          scheduleId={currentSchedule.id}
+          solutions={solutions}
+          onApplied={handleSolutionApplied}
+          onClose={() => setSolutions(null)}
+        />
+      )}
     </main>
   );
 }

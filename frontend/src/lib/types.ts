@@ -157,6 +157,47 @@ export interface SolveResponse {
   message: string;
 }
 
+export interface NlpParsedRule {
+  natural_text: string;
+  template_type: string;
+  hard_or_soft: "hard" | "soft";
+  weight: number;
+  body: Record<string, unknown>;
+  tags: string[];
+}
+
+export interface NlpRuleParseResponse {
+  parsed: NlpParsedRule;
+}
+
+export interface NlpExplainResponse {
+  explanation: string;
+  num_violations: number;
+}
+
+export interface SolutionSummary {
+  preset: string;
+  label: string;
+  status: string;
+  objective_value: number | null;
+  num_assignments: number;
+  num_events_placed: number;
+  stats: {
+    status: string;
+    objective_value: number | null;
+    wall_time: number | null;
+    num_assignments_generated: number;
+    num_staff: number;
+    num_dates: number;
+    num_events: number;
+  };
+}
+
+export interface MultiSolveResponse {
+  solutions: SolutionSummary[];
+  message: string;
+}
+
 export interface GridRow {
   date: string;
   time_block: string;

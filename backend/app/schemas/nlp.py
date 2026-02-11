@@ -33,3 +33,25 @@ class NlpParseResponse(BaseModel):
     parsed: NlpParsedEvent
     confidence: str | None = None
     clarification: str | None = None
+
+
+class NlpParsedRule(BaseModel):
+    natural_text: str
+    template_type: str = "headcount"
+    hard_or_soft: str = "soft"
+    weight: int = 100
+    body: dict = Field(default_factory=dict)
+    tags: list[str] = Field(default_factory=list)
+
+
+class NlpRuleParseResponse(BaseModel):
+    parsed: NlpParsedRule
+
+
+class NlpExplainRequest(BaseModel):
+    schedule_id: str
+
+
+class NlpExplainResponse(BaseModel):
+    explanation: str
+    num_violations: int

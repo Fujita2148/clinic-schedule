@@ -8,7 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.models.rule import Rule
+from app.models.staff import Staff
+from app.models.task_type import TaskType
+from app.schemas.nlp import NlpParseRequest, NlpRuleParseResponse
 from app.schemas.rule import RuleCreate, RuleResponse, RuleUpdate
+from app.services.nlp_service import parse_rule_from_text
 
 router = APIRouter(prefix="/rules", tags=["rules"])
 
@@ -105,3 +109,37 @@ async def delete_rule(
         raise HTTPException(status_code=404, detail="ルールが見つかりません")
 
     await db.delete(rule)
+
+
+@router.post("/from-text", response_model=NlpRuleParseResponse)
+async def parse_rule_text(
+    request: NlpParseRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Parse natural language text into a structured rule using Claude API."""
+    # Load task types for context
+    tt_result = await db.execute(
+        select(TaskType).where(TaskType.is_active == True).order_by(TaskType.code)  # noqa: E712
+    )
+    task_types = [
+        {"code": t.code, "display_name": t.display_name}
+        for t in tt_result.scalars().all()
+    ]
+
+    # Load staff names for context
+    staff_result = await db.execute(
+        select(Staff).where(Staff.is_active == True).order_by(Staff.name)  # noqa: E712
+    )
+    staff_names = [s.name for s in staff_result.scalars().all()]
+
+    # Load existing rules for context
+    rule_result = await db.execute(
+        select(Rule).where(Rule.is_active == True).order_by(Rule.created_at.desc())  # noqa: E712
+    )
+    existing_rules = [
+        {"natural_text": r.natural_text, "template_type": r.template_type}
+        for r in rule_result.scalars().all()
+    ]
+
+    parsed = await parse_rule_from_text(request.text, task_types, staff_names, existing_rules)
+    return NlpRuleParseResponse(parsed=parsed)
