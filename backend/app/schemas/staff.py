@@ -39,3 +39,16 @@ class SkillMasterResponse(BaseModel):
     description: str | None = None
 
     model_config = {"from_attributes": True}
+
+
+class StaffSkillCreate(BaseModel):
+    skill_code: str
+    level: str = "qualified"
+
+
+class StaffSkillResponse(BaseModel):
+    staff_id: uuid.UUID
+    skill_code: str
+    level: str
+
+    model_config = {"from_attributes": True}

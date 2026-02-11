@@ -10,12 +10,15 @@ import {
   getGrid,
   getColorLegend,
   getTaskTypes,
+  getViolations,
+  updateScheduleStatus,
 } from "@/lib/api";
 import type {
   Schedule,
   GridData,
   ColorLegendItem,
   TaskType,
+  Violation,
 } from "@/lib/types";
 
 export default function Home() {
@@ -24,6 +27,7 @@ export default function Home() {
   const [gridData, setGridData] = useState<GridData | null>(null);
   const [colorLegend, setColorLegend] = useState<ColorLegendItem[]>([]);
   const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
+  const [violations, setViolations] = useState<Violation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,8 +63,12 @@ export default function Home() {
 
   async function selectSchedule(schedule: Schedule) {
     setCurrentSchedule(schedule);
-    const grid = await getGrid(schedule.id);
+    const [grid, viols] = await Promise.all([
+      getGrid(schedule.id),
+      getViolations(schedule.id).catch(() => [] as Violation[]),
+    ]);
     setGridData(grid);
+    setViolations(viols);
   }
 
   async function handleCreateSchedule() {
@@ -77,8 +85,27 @@ export default function Home() {
 
   async function refreshGrid() {
     if (currentSchedule) {
-      const grid = await getGrid(currentSchedule.id);
+      const [grid, viols] = await Promise.all([
+        getGrid(currentSchedule.id),
+        getViolations(currentSchedule.id).catch(() => [] as Violation[]),
+      ]);
       setGridData(grid);
+      setViolations(viols);
+    }
+  }
+
+  async function handleUpdateStatus(newStatus: string) {
+    if (!currentSchedule) return;
+    if (newStatus === "confirmed" && !confirm("スケジュールを確定しますか？確定後は編集できません。")) return;
+    try {
+      const updated = await updateScheduleStatus(currentSchedule.id, newStatus);
+      setCurrentSchedule(updated);
+      // Update in schedules list too
+      setSchedules((prev) =>
+        prev.map((s) => (s.id === updated.id ? updated : s))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "ステータス更新エラー");
     }
   }
 
@@ -91,13 +118,14 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-col h-screen">
+    <main className="flex flex-col flex-1 min-h-0">
       <GridToolbar
         schedules={schedules}
         currentSchedule={currentSchedule}
         onSelectSchedule={selectSchedule}
         onCreateSchedule={handleCreateSchedule}
         onRefresh={refreshGrid}
+        onUpdateStatus={handleUpdateStatus}
       />
 
       {error && (
@@ -118,6 +146,8 @@ export default function Home() {
             gridData={gridData}
             taskTypes={taskTypes}
             colorLegend={colorLegend}
+            violations={violations}
+            scheduleStatus={currentSchedule?.status}
             onRefresh={refreshGrid}
           />
         ) : (

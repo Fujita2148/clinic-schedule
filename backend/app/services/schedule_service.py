@@ -10,6 +10,7 @@ from app.models.day_program import DayProgram
 from app.models.master import TimeBlockMaster
 from app.models.schedule import Schedule, ScheduleAssignment
 from app.models.staff import Staff
+from app.models.task_type import TaskType
 from app.schemas.schedule import GridCell, GridData, GridRow
 
 TIME_BLOCK_ORDER = ["am", "lunch", "pm", "15", "16", "17", "18plus"]
@@ -29,6 +30,11 @@ async def build_grid_data(db: AsyncSession, schedule: Schedule) -> GridData:
     tb_result = await db.execute(select(TimeBlockMaster).order_by(TimeBlockMaster.sort_order))
     time_blocks = tb_result.scalars().all()
     tb_display = {tb.code: tb.display_name for tb in time_blocks}
+
+    # Fetch task types for display name lookup
+    tt_result = await db.execute(select(TaskType))
+    task_types = tt_result.scalars().all()
+    tt_display = {tt.code: tt.display_name for tt in task_types}
 
     # Fetch assignments
     assign_result = await db.execute(
@@ -64,6 +70,7 @@ async def build_grid_data(db: AsyncSession, schedule: Schedule) -> GridData:
                     cells[sid] = GridCell(
                         assignment_id=a.id,
                         task_type_code=a.task_type_code,
+                        task_type_display_name=tt_display.get(a.task_type_code) if a.task_type_code else None,
                         display_text=a.display_text,
                         status_color=a.status_color,
                         is_locked=a.is_locked,

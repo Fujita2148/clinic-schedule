@@ -44,3 +44,12 @@ async def update_task_type(code: str, data: TaskTypeUpdate, db: AsyncSession = D
     await db.flush()
     await db.refresh(task_type)
     return task_type
+
+
+@router.delete("/{code}", status_code=204)
+async def soft_delete_task_type(code: str, db: AsyncSession = Depends(get_db)):
+    task_type = await db.get(TaskType, code)
+    if not task_type:
+        raise HTTPException(status_code=404, detail="Task type not found")
+    task_type.is_active = False
+    await db.flush()

@@ -19,6 +19,10 @@ class ScheduleResponse(ScheduleBase):
     model_config = {"from_attributes": True}
 
 
+class ScheduleStatusUpdate(BaseModel):
+    status: str
+
+
 class AssignmentBase(BaseModel):
     staff_id: uuid.UUID
     date: date
@@ -51,6 +55,7 @@ class AssignmentResponse(AssignmentBase):
 class GridCell(BaseModel):
     assignment_id: uuid.UUID | None = None
     task_type_code: str | None = None
+    task_type_display_name: str | None = None
     display_text: str | None = None
     status_color: str | None = None
     is_locked: bool = False

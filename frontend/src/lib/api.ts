@@ -2,9 +2,12 @@ import type {
   ColorLegendItem,
   GridData,
   Schedule,
+  SkillMasterItem,
   Staff,
+  StaffSkill,
   TaskType,
   TimeBlock,
+  Violation,
 } from "./types";
 
 const API_BASE = "/api/v1";
@@ -25,9 +28,24 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 export const getStaffs = () => fetchJson<Staff[]>("/staffs");
 export const createStaff = (data: Partial<Staff>) =>
   fetchJson<Staff>("/staffs", { method: "POST", body: JSON.stringify(data) });
+export const updateStaff = (staffId: string, data: Partial<Staff>) =>
+  fetchJson<Staff>(`/staffs/${staffId}`, { method: "PUT", body: JSON.stringify(data) });
+export const deleteStaff = (staffId: string) =>
+  fetchJson<void>(`/staffs/${staffId}`, { method: "DELETE" });
+export const getStaffSkills = (staffId: string) =>
+  fetchJson<StaffSkill[]>(`/staffs/${staffId}/skills`);
+export const replaceStaffSkills = (staffId: string, skills: { skill_code: string; level?: string }[]) =>
+  fetchJson<StaffSkill[]>(`/staffs/${staffId}/skills`, { method: "PUT", body: JSON.stringify(skills) });
+export const getSkillMaster = () => fetchJson<SkillMasterItem[]>("/staffs/skills");
 
 // Task Types
 export const getTaskTypes = () => fetchJson<TaskType[]>("/task-types");
+export const createTaskType = (data: Partial<TaskType>) =>
+  fetchJson<TaskType>("/task-types", { method: "POST", body: JSON.stringify(data) });
+export const updateTaskType = (code: string, data: Partial<TaskType>) =>
+  fetchJson<TaskType>(`/task-types/${code}`, { method: "PUT", body: JSON.stringify(data) });
+export const deleteTaskType = (code: string) =>
+  fetchJson<void>(`/task-types/${code}`, { method: "DELETE" });
 
 // Time Blocks
 export const getTimeBlocks = () => fetchJson<TimeBlock[]>("/time-blocks");
@@ -41,6 +59,11 @@ export const createSchedule = (year_month: string) =>
   fetchJson<Schedule>("/schedules", {
     method: "POST",
     body: JSON.stringify({ year_month }),
+  });
+export const updateScheduleStatus = (scheduleId: string, status: string) =>
+  fetchJson<Schedule>(`/schedules/${scheduleId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
   });
 
 // Grid
@@ -67,6 +90,27 @@ export const upsertAssignment = (
 export const deleteAssignment = (scheduleId: string, assignmentId: string) =>
   fetch(`${API_BASE}/schedules/${scheduleId}/assignments/${assignmentId}`, {
     method: "DELETE",
+  });
+
+export const toggleAssignmentLock = (scheduleId: string, assignmentId: string) =>
+  fetchJson(`/schedules/${scheduleId}/assignments/${assignmentId}/lock`, {
+    method: "PATCH",
+  });
+
+// Violations
+export const getViolations = (scheduleId: string) =>
+  fetchJson<Violation[]>(`/schedules/${scheduleId}/violations`);
+export const checkViolations = (scheduleId: string) =>
+  fetchJson<Violation[]>(`/schedules/${scheduleId}/violations/check`, { method: "POST" });
+
+// Day Programs
+export const upsertDayProgram = (
+  scheduleId: string,
+  data: { date: string; time_block: string; program_title?: string; is_nightcare?: boolean; summary_text?: string }
+) =>
+  fetchJson(`/schedules/${scheduleId}/day-programs`, {
+    method: "PUT",
+    body: JSON.stringify(data),
   });
 
 // Export

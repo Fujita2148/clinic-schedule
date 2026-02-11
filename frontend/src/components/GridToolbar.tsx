@@ -9,6 +9,7 @@ interface Props {
   onSelectSchedule: (schedule: Schedule) => void;
   onCreateSchedule: () => void;
   onRefresh: () => void;
+  onUpdateStatus?: (status: string) => void;
 }
 
 export function GridToolbar({
@@ -17,7 +18,10 @@ export function GridToolbar({
   onSelectSchedule,
   onCreateSchedule,
   onRefresh,
+  onUpdateStatus,
 }: Props) {
+  const status = currentSchedule?.status;
+
   return (
     <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-4 flex-wrap">
       <h1 className="text-lg font-bold text-gray-800 whitespace-nowrap">
@@ -50,6 +54,40 @@ export function GridToolbar({
           + 新規
         </button>
       </div>
+
+      {currentSchedule && onUpdateStatus && (
+        <div className="flex items-center gap-2">
+          {status === "draft" && (
+            <button
+              onClick={() => onUpdateStatus("reviewing")}
+              className="bg-yellow-500 text-white px-3 py-1.5 rounded text-sm hover:bg-yellow-600"
+            >
+              確認中へ
+            </button>
+          )}
+          {status === "reviewing" && (
+            <>
+              <button
+                onClick={() => onUpdateStatus("confirmed")}
+                className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700"
+              >
+                確定
+              </button>
+              <button
+                onClick={() => onUpdateStatus("draft")}
+                className="border border-gray-300 px-3 py-1.5 rounded text-sm hover:bg-gray-50"
+              >
+                下書きに戻す
+              </button>
+            </>
+          )}
+          {status === "confirmed" && (
+            <span className="bg-green-100 text-green-800 px-3 py-1.5 rounded text-sm font-medium">
+              確定済み
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center gap-2 ml-auto">
         <button

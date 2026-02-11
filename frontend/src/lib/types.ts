@@ -48,10 +48,35 @@ export interface Schedule {
 export interface GridCell {
   assignment_id: string | null;
   task_type_code: string | null;
+  task_type_display_name: string | null;
   display_text: string | null;
   status_color: string | null;
   is_locked: boolean;
   source: string;
+}
+
+export interface StaffSkill {
+  staff_id: string;
+  skill_code: string;
+  level: string;
+}
+
+export interface SkillMasterItem {
+  code: string;
+  name: string;
+  description: string | null;
+}
+
+export interface Violation {
+  id: string;
+  violation_type: "hard" | "soft";
+  severity: number | null;
+  description: string;
+  affected_date: string | null;
+  affected_time_block: string | null;
+  affected_staff: string[];
+  suggestion: string | null;
+  is_resolved: boolean;
 }
 
 export interface GridRow {

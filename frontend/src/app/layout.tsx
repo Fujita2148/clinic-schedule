@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AppNav } from "@/components/AppNav";
 
 export const metadata: Metadata = {
   title: "クリニック スケジュール管理",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className="bg-white text-gray-900 min-h-screen">{children}</body>
+      <body className="bg-white text-gray-900 min-h-screen flex flex-col">
+        <AppNav />
+        {children}
+      </body>
     </html>
   );
 }

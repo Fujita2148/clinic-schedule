@@ -86,6 +86,7 @@ async def validate_schedule(db: AsyncSession, schedule_id) -> list[dict]:
             "description": f"重複割当: staff={row.staff_id} date={row.date} block={row.time_block}",
             "affected_date": str(row.date),
             "affected_time_block": row.time_block,
+            "affected_staff": [str(row.staff_id)],
         })
 
     return violations

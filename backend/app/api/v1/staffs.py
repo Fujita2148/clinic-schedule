@@ -5,8 +5,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.models.staff import SkillMaster, Staff
-from app.schemas.staff import SkillMasterResponse, StaffCreate, StaffResponse, StaffUpdate
+from app.models.staff import SkillMaster, Staff, StaffSkill
+from app.schemas.staff import (
+    SkillMasterResponse,
+    StaffCreate,
+    StaffResponse,
+    StaffSkillCreate,
+    StaffSkillResponse,
+    StaffUpdate,
+)
 
 router = APIRouter(prefix="/staffs", tags=["staffs"])
 
@@ -60,3 +67,44 @@ async def update_staff(staff_id: uuid.UUID, data: StaffUpdate, db: AsyncSession 
     await db.flush()
     await db.refresh(staff)
     return staff
+
+
+@router.delete("/{staff_id}", status_code=204)
+async def soft_delete_staff(staff_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    staff = await db.get(Staff, staff_id)
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff not found")
+    staff.is_active = False
+    await db.flush()
+
+
+@router.get("/{staff_id}/skills", response_model=list[StaffSkillResponse])
+async def list_staff_skills(staff_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    staff = await db.get(Staff, staff_id)
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff not found")
+    result = await db.execute(select(StaffSkill).where(StaffSkill.staff_id == staff_id))
+    return result.scalars().all()
+
+
+@router.put("/{staff_id}/skills", response_model=list[StaffSkillResponse])
+async def replace_staff_skills(
+    staff_id: uuid.UUID,
+    data: list[StaffSkillCreate],
+    db: AsyncSession = Depends(get_db),
+):
+    staff = await db.get(Staff, staff_id)
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff not found")
+    existing = await db.execute(select(StaffSkill).where(StaffSkill.staff_id == staff_id))
+    for sk in existing.scalars().all():
+        await db.delete(sk)
+    await db.flush()
+    results = []
+    for item in data:
+        skill = StaffSkill(staff_id=staff_id, skill_code=item.skill_code, level=item.level)
+        db.add(skill)
+        await db.flush()
+        await db.refresh(skill)
+        results.append(skill)
+    return results
