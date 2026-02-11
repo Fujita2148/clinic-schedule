@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-off: #FF0000;
+  --color-pre-work: #FFB6C1;
+  --color-post-work: #800080;
+  --color-visit: #008000;
+}
+
+.grid-cell {
+  @apply border border-gray-200 px-1 py-0.5 text-xs min-h-[2rem] relative;
+}
+
+.grid-cell:hover {
+  @apply bg-blue-50 cursor-pointer;
+}
+
+.grid-cell.locked {
+  @apply bg-gray-100 opacity-75;
+}
+
+.grid-header {
+  @apply bg-gray-50 font-semibold text-sm border border-gray-300 px-2 py-1 sticky top-0 z-10;
+}
+
+.time-block-cell {
+  @apply bg-gray-50 font-medium text-xs border border-gray-300 px-1 py-0.5 sticky left-[6rem] z-[5] whitespace-nowrap;
+}
+
+.date-cell {
+  @apply bg-gray-100 font-semibold text-sm border border-gray-300 px-2 py-1 sticky left-0 z-[5];
+}
+
+.weekend { @apply bg-blue-50; }
+.holiday { @apply bg-red-50 text-red-700; }
+.week-boundary { @apply border-t-2 border-t-gray-500; }
+
+.status-off { background-color: var(--color-off); color: white; }
+.status-pre_work { background-color: var(--color-pre-work); }
+.status-post_work { background-color: var(--color-post-work); color: white; }
+.status-visit { background-color: var(--color-visit); color: white; }
+
+.hatch-diagonal {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.1) 3px,
+    rgba(0, 0, 0, 0.1) 6px
+  );
+}
