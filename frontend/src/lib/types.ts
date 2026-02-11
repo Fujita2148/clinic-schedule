@@ -97,6 +97,52 @@ export interface Rule {
   updated_at: string;
 }
 
+export interface ClinicEvent {
+  id: string;
+  type_code: string | null;
+  subject_name: string | null;
+  subject_anonymous_id: string | null;
+  location_type: string;
+  duration_hours: number;
+  time_constraint_type: string;
+  time_constraint_data: Record<string, unknown>;
+  required_skills: string[];
+  preferred_skills: string[];
+  required_resources: string[];
+  assigned_staff_ids: string[];
+  priority: string;
+  deadline: string | null;
+  status: string;
+  notes: string | null;
+  natural_text: string | null;
+  attributes: Record<string, unknown>;
+  links: unknown[];
+  provisional_constraints: unknown[];
+  schedule_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NlpParsedEvent {
+  type_code: string | null;
+  subject_name: string | null;
+  location_type: string;
+  duration_hours: number;
+  time_constraint: { type: string; data: Record<string, unknown> };
+  required_skills: string[];
+  preferred_skills: string[];
+  required_resources: string[];
+  priority: string;
+  deadline: string | null;
+  notes: string | null;
+}
+
+export interface NlpParseResponse {
+  parsed: NlpParsedEvent;
+  confidence: string | null;
+  clarification: string | null;
+}
+
 export interface SolveResponse {
   status: string;
   num_assignments: number;

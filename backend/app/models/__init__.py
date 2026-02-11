@@ -1,5 +1,6 @@
 from app.models.base import Base
 from app.models.day_program import DayProgram
+from app.models.event import Event
 from app.models.master import ColorLegend, TimeBlockMaster
 from app.models.resource import Resource, ResourceBooking
 from app.models.rule import Rule
@@ -21,6 +22,7 @@ __all__ = [
     "TimeBlockMaster",
     "ColorLegend",
     "DayProgram",
+    "Event",
     "Rule",
     "Violation",
 ]

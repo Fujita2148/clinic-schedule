@@ -1,6 +1,8 @@
 import type {
+  ClinicEvent,
   ColorLegendItem,
   GridData,
+  NlpParseResponse,
   Rule,
   Schedule,
   SkillMasterItem,
@@ -132,6 +134,29 @@ export const toggleRule = (ruleId: string) =>
   fetchJson<Rule>(`/rules/${ruleId}/toggle`, { method: "PATCH" });
 export const deleteRule = (ruleId: string) =>
   fetch(`${API_BASE}/rules/${ruleId}`, { method: "DELETE" });
+
+// Events
+export const getEvents = (params?: { status?: string; schedule_id?: string; type_code?: string }) => {
+  const searchParams = new URLSearchParams();
+  if (params?.status) searchParams.set("status", params.status);
+  if (params?.schedule_id) searchParams.set("schedule_id", params.schedule_id);
+  if (params?.type_code) searchParams.set("type_code", params.type_code);
+  const qs = searchParams.toString();
+  return fetchJson<ClinicEvent[]>(`/events${qs ? `?${qs}` : ""}`);
+};
+export const createEvent = (data: Partial<ClinicEvent>) =>
+  fetchJson<ClinicEvent>("/events", { method: "POST", body: JSON.stringify(data) });
+export const parseEventFromText = (text: string, scheduleId?: string) =>
+  fetchJson<NlpParseResponse>("/events/from-text", {
+    method: "POST",
+    body: JSON.stringify({ text, schedule_id: scheduleId }),
+  });
+export const getEvent = (eventId: string) =>
+  fetchJson<ClinicEvent>(`/events/${eventId}`);
+export const updateEvent = (eventId: string, data: Partial<ClinicEvent>) =>
+  fetchJson<ClinicEvent>(`/events/${eventId}`, { method: "PUT", body: JSON.stringify(data) });
+export const deleteEvent = (eventId: string) =>
+  fetch(`${API_BASE}/events/${eventId}`, { method: "DELETE" });
 
 // Solver
 export const runSolver = (scheduleId: string, options?: { time_limit_seconds?: number; clear_unlocked?: boolean }) =>
