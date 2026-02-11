@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ShiftGrid } from "@/components/ShiftGrid";
 import { GridToolbar } from "@/components/GridToolbar";
 import { ColorLegend } from "@/components/ColorLegend";
+import { ViolationsPanel } from "@/components/ViolationsPanel";
 import {
   getSchedules,
   createSchedule,
@@ -11,6 +12,7 @@ import {
   getColorLegend,
   getTaskTypes,
   getViolations,
+  checkViolations,
   updateScheduleStatus,
 } from "@/lib/api";
 import type {
@@ -29,6 +31,7 @@ export default function Home() {
   const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
   const [violations, setViolations] = useState<Violation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [violationLoading, setViolationLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Get current year-month
@@ -91,6 +94,19 @@ export default function Home() {
       ]);
       setGridData(grid);
       setViolations(viols);
+    }
+  }
+
+  async function handleCheckViolations() {
+    if (!currentSchedule) return;
+    try {
+      setViolationLoading(true);
+      const viols = await checkViolations(currentSchedule.id);
+      setViolations(viols);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "検証エラー");
+    } finally {
+      setViolationLoading(false);
     }
   }
 
@@ -164,6 +180,14 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {currentSchedule && (
+        <ViolationsPanel
+          violations={violations}
+          onCheck={handleCheckViolations}
+          loading={violationLoading}
+        />
+      )}
 
       <ColorLegend items={colorLegend} />
     </main>

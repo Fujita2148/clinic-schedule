@@ -66,11 +66,14 @@ async def check_violations(
     for v in found:
         violation = Violation(
             schedule_id=schedule_id,
+            rule_id=v.get("rule_id"),
             violation_type=v["type"],
+            severity=v.get("severity"),
             description=v["description"],
             affected_date=v.get("affected_date"),
             affected_time_block=v.get("affected_time_block"),
             affected_staff=v.get("affected_staff", []),
+            suggestion=v.get("suggestion"),
         )
         db.add(violation)
         new_violations.append(violation)

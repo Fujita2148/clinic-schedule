@@ -1,6 +1,7 @@
 import type {
   ColorLegendItem,
   GridData,
+  Rule,
   Schedule,
   SkillMasterItem,
   Staff,
@@ -112,6 +113,24 @@ export const upsertDayProgram = (
     method: "PUT",
     body: JSON.stringify(data),
   });
+
+// Rules
+export const getRules = (params?: { is_active?: boolean; template_type?: string; hard_or_soft?: string }) => {
+  const searchParams = new URLSearchParams();
+  if (params?.is_active !== undefined) searchParams.set("is_active", String(params.is_active));
+  if (params?.template_type) searchParams.set("template_type", params.template_type);
+  if (params?.hard_or_soft) searchParams.set("hard_or_soft", params.hard_or_soft);
+  const qs = searchParams.toString();
+  return fetchJson<Rule[]>(`/rules${qs ? `?${qs}` : ""}`);
+};
+export const createRule = (data: Partial<Rule>) =>
+  fetchJson<Rule>("/rules", { method: "POST", body: JSON.stringify(data) });
+export const updateRule = (ruleId: string, data: Partial<Rule>) =>
+  fetchJson<Rule>(`/rules/${ruleId}`, { method: "PUT", body: JSON.stringify(data) });
+export const toggleRule = (ruleId: string) =>
+  fetchJson<Rule>(`/rules/${ruleId}/toggle`, { method: "PATCH" });
+export const deleteRule = (ruleId: string) =>
+  fetch(`${API_BASE}/rules/${ruleId}`, { method: "DELETE" });
 
 // Export
 export const getExportCsvUrl = (scheduleId: string) =>

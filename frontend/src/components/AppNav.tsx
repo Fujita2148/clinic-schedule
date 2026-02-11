@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: "/", label: "シフト表" },
   { href: "/staffs", label: "職員管理" },
   { href: "/task-types", label: "業務コード管理" },
+  { href: "/rules", label: "ルール管理" },
 ];
 
 export function AppNav() {

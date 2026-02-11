@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Base
 from app.models.master import ColorLegend, TimeBlockMaster
+from app.models.rule import Rule
 from app.models.staff import SkillMaster, Staff
 from app.models.task_type import TaskType
 from app.core.database import engine
@@ -102,10 +103,80 @@ async def seed_sample_staff(db: AsyncSession):
     db.add_all(staffs)
 
 
+async def seed_rules(db: AsyncSession):
+    existing = await db.execute(select(Rule))
+    if existing.scalars().first():
+        return
+
+    rules = [
+        Rule(
+            natural_text="外出プログラムの時は職員3人つくこと",
+            template_type="headcount",
+            scope={"type": "task_type"},
+            hard_or_soft="hard",
+            weight=1000,
+            body={"task_type_code": "outing", "min_staff": 3},
+            tags=["外出", "人員配置"],
+            applies_to={"task_type": "outing"},
+        ),
+        Rule(
+            natural_text="デイケアは最低2名体制",
+            template_type="headcount",
+            scope={"type": "task_type"},
+            hard_or_soft="soft",
+            weight=800,
+            body={"task_type_code": "daycare", "min_staff": 2},
+            tags=["デイケア", "人員配置"],
+            applies_to={"task_type": "daycare"},
+        ),
+        Rule(
+            natural_text="ナイトケアは最低2名体制",
+            template_type="headcount",
+            scope={"type": "task_type"},
+            hard_or_soft="soft",
+            weight=800,
+            body={"task_type_code": "nightcare", "min_staff": 2},
+            tags=["ナイトケア", "人員配置"],
+            applies_to={"task_type": "nightcare"},
+        ),
+        Rule(
+            natural_text="八木さんは金曜午後勤務不可",
+            template_type="availability",
+            scope={"type": "weekly", "weekday": 4},
+            hard_or_soft="soft",
+            weight=600,
+            body={"staff_name": "八木", "blocked_weekdays": [4], "blocked_blocks": ["pm", "15", "16", "17", "18plus"]},
+            tags=["勤務制限"],
+        ),
+        Rule(
+            natural_text="訪問看護にはNURSEスキルが必要",
+            template_type="skill_req",
+            scope={"type": "task_type"},
+            hard_or_soft="hard",
+            weight=1000,
+            body={"task_type_code": "visit_nurse", "required_skills": ["NURSE"]},
+            tags=["スキル要件", "訪問"],
+            applies_to={"task_type": "visit_nurse"},
+        ),
+        Rule(
+            natural_text="心理検査にはCPスキルが必要",
+            template_type="skill_req",
+            scope={"type": "task_type"},
+            hard_or_soft="hard",
+            weight=1000,
+            body={"task_type_code": "psych_test", "required_skills": ["CP"]},
+            tags=["スキル要件", "検査"],
+            applies_to={"task_type": "psych_test"},
+        ),
+    ]
+    db.add_all(rules)
+
+
 async def seed_all(db: AsyncSession):
     await seed_time_blocks(db)
     await seed_color_legend(db)
     await seed_skills(db)
     await seed_task_types(db)
     await seed_sample_staff(db)
+    await seed_rules(db)
     await db.commit()

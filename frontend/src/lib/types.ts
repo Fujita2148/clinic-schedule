@@ -79,6 +79,24 @@ export interface Violation {
   is_resolved: boolean;
 }
 
+export interface Rule {
+  id: string;
+  natural_text: string;
+  template_type: string;
+  scope: Record<string, unknown>;
+  hard_or_soft: "hard" | "soft";
+  weight: number;
+  body: Record<string, unknown>;
+  exceptions: unknown[];
+  tags: string[];
+  applies_to: Record<string, unknown>;
+  is_active: boolean;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface GridRow {
   date: string;
   time_block: string;
