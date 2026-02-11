@@ -10,6 +10,8 @@ interface Props {
   onCreateSchedule: () => void;
   onRefresh: () => void;
   onUpdateStatus?: (status: string) => void;
+  onSolve?: () => void;
+  solving?: boolean;
 }
 
 export function GridToolbar({
@@ -19,6 +21,8 @@ export function GridToolbar({
   onCreateSchedule,
   onRefresh,
   onUpdateStatus,
+  onSolve,
+  solving,
 }: Props) {
   const status = currentSchedule?.status;
 
@@ -87,6 +91,16 @@ export function GridToolbar({
             </span>
           )}
         </div>
+      )}
+
+      {currentSchedule && status !== "confirmed" && onSolve && (
+        <button
+          onClick={onSolve}
+          disabled={solving}
+          className="bg-purple-600 text-white px-3 py-1.5 rounded text-sm hover:bg-purple-700 disabled:opacity-50"
+        >
+          {solving ? "生成中..." : "案生成"}
+        </button>
       )}
 
       <div className="flex items-center gap-2 ml-auto">

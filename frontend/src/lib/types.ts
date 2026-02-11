@@ -97,6 +97,20 @@ export interface Rule {
   updated_at: string;
 }
 
+export interface SolveResponse {
+  status: string;
+  num_assignments: number;
+  stats: {
+    status: string;
+    objective_value: number | null;
+    wall_time: number | null;
+    num_assignments_generated: number;
+    num_staff: number;
+    num_dates: number;
+  };
+  message: string;
+}
+
 export interface GridRow {
   date: string;
   time_block: string;

@@ -14,6 +14,7 @@ import {
   getViolations,
   checkViolations,
   updateScheduleStatus,
+  runSolver,
 } from "@/lib/api";
 import type {
   Schedule,
@@ -32,6 +33,7 @@ export default function Home() {
   const [violations, setViolations] = useState<Violation[]>([]);
   const [loading, setLoading] = useState(true);
   const [violationLoading, setViolationLoading] = useState(false);
+  const [solving, setSolving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Get current year-month
@@ -110,6 +112,20 @@ export default function Home() {
     }
   }
 
+  async function handleSolve() {
+    if (!currentSchedule) return;
+    try {
+      setSolving(true);
+      const result = await runSolver(currentSchedule.id);
+      await refreshGrid();
+      alert(result.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "案生成エラー");
+    } finally {
+      setSolving(false);
+    }
+  }
+
   async function handleUpdateStatus(newStatus: string) {
     if (!currentSchedule) return;
     if (newStatus === "confirmed" && !confirm("スケジュールを確定しますか？確定後は編集できません。")) return;
@@ -142,6 +158,8 @@ export default function Home() {
         onCreateSchedule={handleCreateSchedule}
         onRefresh={refreshGrid}
         onUpdateStatus={handleUpdateStatus}
+        onSolve={handleSolve}
+        solving={solving}
       />
 
       {error && (

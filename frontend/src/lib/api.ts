@@ -4,6 +4,7 @@ import type {
   Rule,
   Schedule,
   SkillMasterItem,
+  SolveResponse,
   Staff,
   StaffSkill,
   TaskType,
@@ -131,6 +132,13 @@ export const toggleRule = (ruleId: string) =>
   fetchJson<Rule>(`/rules/${ruleId}/toggle`, { method: "PATCH" });
 export const deleteRule = (ruleId: string) =>
   fetch(`${API_BASE}/rules/${ruleId}`, { method: "DELETE" });
+
+// Solver
+export const runSolver = (scheduleId: string, options?: { time_limit_seconds?: number; clear_unlocked?: boolean }) =>
+  fetchJson<SolveResponse>(`/schedules/${scheduleId}/solve`, {
+    method: "POST",
+    body: JSON.stringify(options || {}),
+  });
 
 // Export
 export const getExportCsvUrl = (scheduleId: string) =>
