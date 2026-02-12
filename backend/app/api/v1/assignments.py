@@ -45,6 +45,8 @@ async def upsert_assignment(
     schedule = await db.get(Schedule, schedule_id)
     if not schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")
+    if schedule.status == "confirmed":
+        raise HTTPException(status_code=403, detail="確定済みスケジュールは編集できません")
 
     valid_blocks = {"am", "lunch", "pm", "15", "16", "17", "18plus"}
     if data.time_block not in valid_blocks:
@@ -82,6 +84,9 @@ async def toggle_lock(
     assignment_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
 ):
+    schedule = await db.get(Schedule, schedule_id)
+    if schedule and schedule.status == "confirmed":
+        raise HTTPException(status_code=403, detail="確定済みスケジュールは編集できません")
     assignment = await db.get(ScheduleAssignment, assignment_id)
     if not assignment or assignment.schedule_id != schedule_id:
         raise HTTPException(status_code=404, detail="Assignment not found")
@@ -97,6 +102,9 @@ async def delete_assignment(
     assignment_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
 ):
+    schedule = await db.get(Schedule, schedule_id)
+    if schedule and schedule.status == "confirmed":
+        raise HTTPException(status_code=403, detail="確定済みスケジュールは編集できません")
     assignment = await db.get(ScheduleAssignment, assignment_id)
     if not assignment or assignment.schedule_id != schedule_id:
         raise HTTPException(status_code=404, detail="Assignment not found")

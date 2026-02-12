@@ -48,10 +48,154 @@ export interface Schedule {
 export interface GridCell {
   assignment_id: string | null;
   task_type_code: string | null;
+  task_type_display_name: string | null;
   display_text: string | null;
   status_color: string | null;
   is_locked: boolean;
   source: string;
+}
+
+export interface StaffSkill {
+  staff_id: string;
+  skill_code: string;
+  level: string;
+}
+
+export interface SkillMasterItem {
+  code: string;
+  name: string;
+  description: string | null;
+}
+
+export interface Violation {
+  id: string;
+  violation_type: "hard" | "soft";
+  severity: number | null;
+  description: string;
+  affected_date: string | null;
+  affected_time_block: string | null;
+  affected_staff: string[];
+  suggestion: string | null;
+  is_resolved: boolean;
+}
+
+export interface Rule {
+  id: string;
+  natural_text: string;
+  template_type: string;
+  scope: Record<string, unknown>;
+  hard_or_soft: "hard" | "soft";
+  weight: number;
+  body: Record<string, unknown>;
+  exceptions: unknown[];
+  tags: string[];
+  applies_to: Record<string, unknown>;
+  is_active: boolean;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClinicEvent {
+  id: string;
+  type_code: string | null;
+  subject_name: string | null;
+  subject_anonymous_id: string | null;
+  location_type: string;
+  duration_hours: number;
+  time_constraint_type: string;
+  time_constraint_data: Record<string, unknown>;
+  required_skills: string[];
+  preferred_skills: string[];
+  required_resources: string[];
+  assigned_staff_ids: string[];
+  priority: string;
+  deadline: string | null;
+  status: string;
+  notes: string | null;
+  natural_text: string | null;
+  attributes: Record<string, unknown>;
+  links: unknown[];
+  provisional_constraints: unknown[];
+  schedule_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NlpParsedEvent {
+  type_code: string | null;
+  subject_name: string | null;
+  location_type: string;
+  duration_hours: number;
+  time_constraint: { type: string; data: Record<string, unknown> };
+  required_skills: string[];
+  preferred_skills: string[];
+  required_resources: string[];
+  priority: string;
+  deadline: string | null;
+  notes: string | null;
+}
+
+export interface NlpParseResponse {
+  parsed: NlpParsedEvent;
+  confidence: string | null;
+  clarification: string | null;
+}
+
+export interface SolveResponse {
+  status: string;
+  num_assignments: number;
+  stats: {
+    status: string;
+    objective_value: number | null;
+    wall_time: number | null;
+    num_assignments_generated: number;
+    num_staff: number;
+    num_dates: number;
+  };
+  message: string;
+}
+
+export interface NlpParsedRule {
+  natural_text: string;
+  template_type: string;
+  hard_or_soft: "hard" | "soft";
+  weight: number;
+  body: Record<string, unknown>;
+  tags: string[];
+}
+
+export interface NlpRuleParseResponse {
+  parsed: NlpParsedRule;
+}
+
+export interface NlpExplainResponse {
+  explanation: string;
+  num_violations: number;
+}
+
+export interface SolutionSummary {
+  preset: string;
+  label: string;
+  status: string;
+  objective_value: number | null;
+  num_assignments: number;
+  num_events_placed: number;
+  stats: {
+    status: string;
+    objective_value: number | null;
+    wall_time: number | null;
+    num_assignments_generated: number;
+    num_staff: number;
+    num_dates: number;
+    num_events: number;
+  };
+}
+
+export interface MultiSolveResponse {
+  solutions: SolutionSummary[];
+  message: string;
 }
 
 export interface GridRow {

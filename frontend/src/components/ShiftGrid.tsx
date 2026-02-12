@@ -1,20 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ShiftCell } from "@/components/ShiftCell";
 import { CellEditor } from "@/components/CellEditor";
+import { CellContextMenu } from "@/components/CellContextMenu";
 import type {
   GridData,
   GridRow,
   TaskType,
   ColorLegendItem,
+  Violation,
 } from "@/lib/types";
-import { upsertAssignment } from "@/lib/api";
+import {
+  upsertAssignment,
+  deleteAssignment,
+  toggleAssignmentLock,
+  upsertDayProgram,
+} from "@/lib/api";
 
 interface Props {
   gridData: GridData;
   taskTypes: TaskType[];
   colorLegend: ColorLegendItem[];
+  violations?: Violation[];
+  scheduleStatus?: string;
   onRefresh: () => void;
 }
 
@@ -31,8 +40,52 @@ interface EditingCell {
   currentStatusColor: string | null;
 }
 
-export function ShiftGrid({ gridData, taskTypes, colorLegend, onRefresh }: Props) {
+interface ContextMenuState {
+  x: number;
+  y: number;
+  scheduleId: string;
+  staffId: string;
+  date: string;
+  timeBlock: string;
+  assignmentId: string | null;
+  isLocked: boolean;
+}
+
+interface DncEditState {
+  date: string;
+  timeBlock: string;
+  value: string;
+}
+
+export function ShiftGrid({
+  gridData,
+  taskTypes,
+  colorLegend,
+  violations = [],
+  scheduleStatus = "draft",
+  onRefresh,
+}: Props) {
   const [editing, setEditing] = useState<EditingCell | null>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [dncEdit, setDncEdit] = useState<DncEditState | null>(null);
+
+  const isConfirmed = scheduleStatus === "confirmed";
+
+  // Build violation index: key = "date|time_block|staff_id" -> violation type
+  const violationIndex = useMemo(() => {
+    const index: Record<string, "hard" | "soft"> = {};
+    for (const v of violations) {
+      if (!v.affected_date || !v.affected_time_block) continue;
+      for (const staffId of v.affected_staff) {
+        const key = `${v.affected_date}|${v.affected_time_block}|${staffId}`;
+        // hard takes precedence over soft
+        if (index[key] !== "hard") {
+          index[key] = v.violation_type;
+        }
+      }
+    }
+    return index;
+  }, [violations]);
 
   // Group rows by date for week boundary detection
   const dateGroups = useMemo(() => {
@@ -50,7 +103,23 @@ export function ShiftGrid({ gridData, taskTypes, colorLegend, onRefresh }: Props
     return groups;
   }, [gridData.rows]);
 
+  // Keyboard shortcut: Delete key clears focused cell
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Delete" && contextMenu && contextMenu.assignmentId && !isConfirmed) {
+        e.preventDefault();
+        deleteAssignment(contextMenu.scheduleId, contextMenu.assignmentId).then(() => {
+          setContextMenu(null);
+          onRefresh();
+        });
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [contextMenu, isConfirmed, onRefresh]);
+
   function handleCellClick(staffId: string, row: GridRow) {
+    if (isConfirmed) return;
     const cell = row.cells[staffId];
     setEditing({
       scheduleId: gridData.schedule_id,
@@ -61,6 +130,57 @@ export function ShiftGrid({ gridData, taskTypes, colorLegend, onRefresh }: Props
       currentDisplayText: cell?.display_text || null,
       currentStatusColor: cell?.status_color || null,
     });
+  }
+
+  function handleContextMenu(e: React.MouseEvent, staffId: string, row: GridRow) {
+    if (isConfirmed) return;
+    e.preventDefault();
+    const cell = row.cells[staffId];
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      scheduleId: gridData.schedule_id,
+      staffId,
+      date: row.date,
+      timeBlock: row.time_block,
+      assignmentId: cell?.assignment_id || null,
+      isLocked: cell?.is_locked || false,
+    });
+  }
+
+  async function handleContextSetColor(color: string | null) {
+    if (!contextMenu) return;
+    try {
+      await upsertAssignment(contextMenu.scheduleId, {
+        staff_id: contextMenu.staffId,
+        date: contextMenu.date,
+        time_block: contextMenu.timeBlock,
+        status_color: color || undefined,
+      });
+      onRefresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "エラー");
+    }
+  }
+
+  async function handleContextToggleLock() {
+    if (!contextMenu?.assignmentId) return;
+    try {
+      await toggleAssignmentLock(contextMenu.scheduleId, contextMenu.assignmentId);
+      onRefresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "エラー");
+    }
+  }
+
+  async function handleContextClear() {
+    if (!contextMenu?.assignmentId) return;
+    try {
+      await deleteAssignment(contextMenu.scheduleId, contextMenu.assignmentId);
+      onRefresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "エラー");
+    }
   }
 
   async function handleSave(
@@ -85,6 +205,29 @@ export function ShiftGrid({ gridData, taskTypes, colorLegend, onRefresh }: Props
     }
   }
 
+  function handleDncClick(row: GridRow) {
+    if (isConfirmed) return;
+    setDncEdit({
+      date: row.date,
+      timeBlock: row.time_block,
+      value: row.program_title || "",
+    });
+  }
+
+  const handleDncSave = useCallback(async (date: string, timeBlock: string, value: string) => {
+    try {
+      await upsertDayProgram(gridData.schedule_id, {
+        date,
+        time_block: timeBlock,
+        program_title: value || undefined,
+      });
+      setDncEdit(null);
+      onRefresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "保存エラー");
+    }
+  }, [gridData.schedule_id, onRefresh]);
+
   function formatDate(dateStr: string): string {
     const d = new Date(dateStr);
     return `${d.getMonth() + 1}/${d.getDate()} (${WEEKDAYS_JP[d.getDay()]})`;
@@ -94,7 +237,6 @@ export function ShiftGrid({ gridData, taskTypes, colorLegend, onRefresh }: Props
     if (index === 0) return false;
     const prevWeekday = dateGroups[index - 1].weekday;
     const currWeekday = dateGroups[index].weekday;
-    // New week starts when current day's weekday is less than previous (wrapped around)
     return currWeekday < prevWeekday;
   }
 
@@ -107,6 +249,19 @@ export function ShiftGrid({ gridData, taskTypes, colorLegend, onRefresh }: Props
           colorLegend={colorLegend}
           onSave={handleSave}
           onClose={() => setEditing(null)}
+        />
+      )}
+
+      {contextMenu && (
+        <CellContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          isLocked={contextMenu.isLocked}
+          hasAssignment={!!contextMenu.assignmentId}
+          onSetColor={handleContextSetColor}
+          onToggleLock={handleContextToggleLock}
+          onClear={handleContextClear}
+          onClose={() => setContextMenu(null)}
         />
       )}
 
@@ -147,6 +302,9 @@ export function ShiftGrid({ gridData, taskTypes, colorLegend, onRefresh }: Props
 
               return group.rows.map((row, rowIdx) => {
                 const isFirstRow = rowIdx === 0;
+                const isDncEditing =
+                  dncEdit?.date === row.date && dncEdit?.timeBlock === row.time_block;
+
                 return (
                   <tr
                     key={`${row.date}-${row.time_block}`}
@@ -168,31 +326,61 @@ export function ShiftGrid({ gridData, taskTypes, colorLegend, onRefresh }: Props
                     <td className="time-block-cell">
                       {row.time_block_display}
                     </td>
-                    <td className="border border-gray-200 px-1 py-0.5 sticky left-[8rem] z-[5] bg-white min-w-[6rem]">
-                      <div className="text-xs">
-                        {row.is_nightcare && (
-                          <span className="text-purple-700 font-semibold">
-                            ナイトケア
-                          </span>
-                        )}
-                        {!row.is_nightcare && row.program_title && (
-                          <span>{row.program_title}</span>
-                        )}
-                      </div>
+                    <td
+                      className="border border-gray-200 px-1 py-0.5 sticky left-[8rem] z-[5] bg-white min-w-[6rem] cursor-pointer hover:bg-blue-50"
+                      onClick={() => handleDncClick(row)}
+                    >
+                      {isDncEditing ? (
+                        <input
+                          autoFocus
+                          className="w-full text-xs border border-blue-400 rounded px-1 py-0.5"
+                          value={dncEdit.value}
+                          onChange={(e) =>
+                            setDncEdit({ ...dncEdit, value: e.target.value })
+                          }
+                          onBlur={() =>
+                            handleDncSave(dncEdit.date, dncEdit.timeBlock, dncEdit.value)
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              handleDncSave(dncEdit.date, dncEdit.timeBlock, dncEdit.value);
+                            } else if (e.key === "Escape") {
+                              setDncEdit(null);
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="text-xs">
+                          {row.is_nightcare && (
+                            <span className="text-purple-700 font-semibold">
+                              ナイトケア
+                            </span>
+                          )}
+                          {!row.is_nightcare && row.program_title && (
+                            <span>{row.program_title}</span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="border border-gray-200 px-1 py-0.5 sticky left-[14rem] z-[5] bg-white min-w-[5rem]">
                       <div className="text-xs text-gray-600 truncate">
                         {row.summary_text}
                       </div>
                     </td>
-                    {gridData.staff_list.map((staff) => (
-                      <ShiftCell
-                        key={staff.id}
-                        cell={row.cells[staff.id]}
-                        colorLegend={colorLegend}
-                        onClick={() => handleCellClick(staff.id, row)}
-                      />
-                    ))}
+                    {gridData.staff_list.map((staff) => {
+                      const vKey = `${row.date}|${row.time_block}|${staff.id}`;
+                      return (
+                        <ShiftCell
+                          key={staff.id}
+                          cell={row.cells[staff.id]}
+                          colorLegend={colorLegend}
+                          violation={violationIndex[vKey] || null}
+                          disabled={isConfirmed}
+                          onClick={() => handleCellClick(staff.id, row)}
+                          onContextMenu={(e) => handleContextMenu(e, staff.id, row)}
+                        />
+                      );
+                    })}
                   </tr>
                 );
               });

@@ -4,18 +4,27 @@ import { useEffect, useState } from "react";
 import { ShiftGrid } from "@/components/ShiftGrid";
 import { GridToolbar } from "@/components/GridToolbar";
 import { ColorLegend } from "@/components/ColorLegend";
+import { ViolationsPanel } from "@/components/ViolationsPanel";
+import { SolutionCompare } from "@/components/SolutionCompare";
 import {
   getSchedules,
   createSchedule,
   getGrid,
   getColorLegend,
   getTaskTypes,
+  getViolations,
+  checkViolations,
+  updateScheduleStatus,
+  runSolver,
+  runMultiSolve,
 } from "@/lib/api";
 import type {
   Schedule,
   GridData,
   ColorLegendItem,
   TaskType,
+  Violation,
+  SolutionSummary,
 } from "@/lib/types";
 
 export default function Home() {
@@ -24,7 +33,12 @@ export default function Home() {
   const [gridData, setGridData] = useState<GridData | null>(null);
   const [colorLegend, setColorLegend] = useState<ColorLegendItem[]>([]);
   const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
+  const [violations, setViolations] = useState<Violation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [violationLoading, setViolationLoading] = useState(false);
+  const [solving, setSolving] = useState(false);
+  const [multiSolving, setMultiSolving] = useState(false);
+  const [solutions, setSolutions] = useState<SolutionSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Get current year-month
@@ -59,8 +73,12 @@ export default function Home() {
 
   async function selectSchedule(schedule: Schedule) {
     setCurrentSchedule(schedule);
-    const grid = await getGrid(schedule.id);
+    const [grid, viols] = await Promise.all([
+      getGrid(schedule.id),
+      getViolations(schedule.id).catch(() => [] as Violation[]),
+    ]);
     setGridData(grid);
+    setViolations(viols);
   }
 
   async function handleCreateSchedule() {
@@ -77,8 +95,72 @@ export default function Home() {
 
   async function refreshGrid() {
     if (currentSchedule) {
-      const grid = await getGrid(currentSchedule.id);
+      const [grid, viols] = await Promise.all([
+        getGrid(currentSchedule.id),
+        getViolations(currentSchedule.id).catch(() => [] as Violation[]),
+      ]);
       setGridData(grid);
+      setViolations(viols);
+    }
+  }
+
+  async function handleCheckViolations() {
+    if (!currentSchedule) return;
+    try {
+      setViolationLoading(true);
+      const viols = await checkViolations(currentSchedule.id);
+      setViolations(viols);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "検証エラー");
+    } finally {
+      setViolationLoading(false);
+    }
+  }
+
+  async function handleSolve() {
+    if (!currentSchedule) return;
+    try {
+      setSolving(true);
+      const result = await runSolver(currentSchedule.id);
+      await refreshGrid();
+      alert(result.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "案生成エラー");
+    } finally {
+      setSolving(false);
+    }
+  }
+
+  async function handleMultiSolve() {
+    if (!currentSchedule) return;
+    try {
+      setMultiSolving(true);
+      const result = await runMultiSolve(currentSchedule.id);
+      setSolutions(result.solutions);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "複数案生成エラー");
+    } finally {
+      setMultiSolving(false);
+    }
+  }
+
+  async function handleSolutionApplied() {
+    setSolutions(null);
+    await refreshGrid();
+  }
+
+  async function handleUpdateStatus(newStatus: string) {
+    if (!currentSchedule) return;
+    if (newStatus === "confirmed" && !confirm("スケジュールを確定しますか？確定後は編集できません。")) return;
+    try {
+      const updated = await updateScheduleStatus(currentSchedule.id, newStatus);
+      setCurrentSchedule(updated);
+      // Update in schedules list too
+      setSchedules((prev) =>
+        prev.map((s) => (s.id === updated.id ? updated : s))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "ステータス更新エラー");
     }
   }
 
@@ -91,13 +173,18 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-col h-screen">
+    <main className="flex flex-col flex-1 min-h-0">
       <GridToolbar
         schedules={schedules}
         currentSchedule={currentSchedule}
         onSelectSchedule={selectSchedule}
         onCreateSchedule={handleCreateSchedule}
         onRefresh={refreshGrid}
+        onUpdateStatus={handleUpdateStatus}
+        onSolve={handleSolve}
+        solving={solving}
+        onMultiSolve={handleMultiSolve}
+        multiSolving={multiSolving}
       />
 
       {error && (
@@ -118,6 +205,8 @@ export default function Home() {
             gridData={gridData}
             taskTypes={taskTypes}
             colorLegend={colorLegend}
+            violations={violations}
+            scheduleStatus={currentSchedule?.status}
             onRefresh={refreshGrid}
           />
         ) : (
@@ -135,7 +224,26 @@ export default function Home() {
         )}
       </div>
 
+      {currentSchedule && (
+        <ViolationsPanel
+          violations={violations}
+          onCheck={handleCheckViolations}
+          loading={violationLoading}
+          scheduleId={currentSchedule.id}
+        />
+      )}
+
       <ColorLegend items={colorLegend} />
+
+      {/* Solution compare modal */}
+      {solutions && currentSchedule && (
+        <SolutionCompare
+          scheduleId={currentSchedule.id}
+          solutions={solutions}
+          onApplied={handleSolutionApplied}
+          onClose={() => setSolutions(null)}
+        />
+      )}
     </main>
   );
 }

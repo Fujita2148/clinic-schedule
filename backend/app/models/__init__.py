@@ -1,7 +1,9 @@
 from app.models.base import Base
 from app.models.day_program import DayProgram
+from app.models.event import Event
 from app.models.master import ColorLegend, TimeBlockMaster
 from app.models.resource import Resource, ResourceBooking
+from app.models.rule import Rule
 from app.models.schedule import Schedule, ScheduleAssignment
 from app.models.staff import SkillMaster, Staff, StaffSkill
 from app.models.task_type import TaskType
@@ -20,5 +22,7 @@ __all__ = [
     "TimeBlockMaster",
     "ColorLegend",
     "DayProgram",
+    "Event",
+    "Rule",
     "Violation",
 ]

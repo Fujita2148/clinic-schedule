@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.models.schedule import Schedule, ScheduleAssignment
-from app.schemas.schedule import ScheduleCreate, ScheduleResponse
+from app.schemas.schedule import ScheduleCreate, ScheduleResponse, ScheduleStatusUpdate
 
 router = APIRouter(prefix="/schedules", tags=["schedules"])
 
@@ -35,4 +35,30 @@ async def get_schedule(schedule_id: uuid.UUID, db: AsyncSession = Depends(get_db
     schedule = await db.get(Schedule, schedule_id)
     if not schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")
+    return schedule
+
+
+@router.patch("/{schedule_id}/status", response_model=ScheduleResponse)
+async def update_schedule_status(
+    schedule_id: uuid.UUID,
+    data: ScheduleStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    schedule = await db.get(Schedule, schedule_id)
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    valid_transitions = {
+        "draft": ["reviewing"],
+        "reviewing": ["confirmed", "draft"],
+        "confirmed": [],
+    }
+    allowed = valid_transitions.get(schedule.status, [])
+    if data.status not in allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot transition from '{schedule.status}' to '{data.status}'. Allowed: {allowed}",
+        )
+    schedule.status = data.status
+    await db.flush()
+    await db.refresh(schedule)
     return schedule

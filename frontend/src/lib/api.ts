@@ -1,10 +1,20 @@
 import type {
+  ClinicEvent,
   ColorLegendItem,
   GridData,
+  MultiSolveResponse,
+  NlpExplainResponse,
+  NlpParseResponse,
+  NlpRuleParseResponse,
+  Rule,
   Schedule,
+  SkillMasterItem,
+  SolveResponse,
   Staff,
+  StaffSkill,
   TaskType,
   TimeBlock,
+  Violation,
 } from "./types";
 
 const API_BASE = "/api/v1";
@@ -25,9 +35,24 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 export const getStaffs = () => fetchJson<Staff[]>("/staffs");
 export const createStaff = (data: Partial<Staff>) =>
   fetchJson<Staff>("/staffs", { method: "POST", body: JSON.stringify(data) });
+export const updateStaff = (staffId: string, data: Partial<Staff>) =>
+  fetchJson<Staff>(`/staffs/${staffId}`, { method: "PUT", body: JSON.stringify(data) });
+export const deleteStaff = (staffId: string) =>
+  fetchJson<void>(`/staffs/${staffId}`, { method: "DELETE" });
+export const getStaffSkills = (staffId: string) =>
+  fetchJson<StaffSkill[]>(`/staffs/${staffId}/skills`);
+export const replaceStaffSkills = (staffId: string, skills: { skill_code: string; level?: string }[]) =>
+  fetchJson<StaffSkill[]>(`/staffs/${staffId}/skills`, { method: "PUT", body: JSON.stringify(skills) });
+export const getSkillMaster = () => fetchJson<SkillMasterItem[]>("/staffs/skills");
 
 // Task Types
 export const getTaskTypes = () => fetchJson<TaskType[]>("/task-types");
+export const createTaskType = (data: Partial<TaskType>) =>
+  fetchJson<TaskType>("/task-types", { method: "POST", body: JSON.stringify(data) });
+export const updateTaskType = (code: string, data: Partial<TaskType>) =>
+  fetchJson<TaskType>(`/task-types/${code}`, { method: "PUT", body: JSON.stringify(data) });
+export const deleteTaskType = (code: string) =>
+  fetchJson<void>(`/task-types/${code}`, { method: "DELETE" });
 
 // Time Blocks
 export const getTimeBlocks = () => fetchJson<TimeBlock[]>("/time-blocks");
@@ -41,6 +66,11 @@ export const createSchedule = (year_month: string) =>
   fetchJson<Schedule>("/schedules", {
     method: "POST",
     body: JSON.stringify({ year_month }),
+  });
+export const updateScheduleStatus = (scheduleId: string, status: string) =>
+  fetchJson<Schedule>(`/schedules/${scheduleId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
   });
 
 // Grid
@@ -69,6 +99,106 @@ export const deleteAssignment = (scheduleId: string, assignmentId: string) =>
     method: "DELETE",
   });
 
+export const toggleAssignmentLock = (scheduleId: string, assignmentId: string) =>
+  fetchJson(`/schedules/${scheduleId}/assignments/${assignmentId}/lock`, {
+    method: "PATCH",
+  });
+
+// Violations
+export const getViolations = (scheduleId: string) =>
+  fetchJson<Violation[]>(`/schedules/${scheduleId}/violations`);
+export const checkViolations = (scheduleId: string) =>
+  fetchJson<Violation[]>(`/schedules/${scheduleId}/violations/check`, { method: "POST" });
+
+// Day Programs
+export const upsertDayProgram = (
+  scheduleId: string,
+  data: { date: string; time_block: string; program_title?: string; is_nightcare?: boolean; summary_text?: string }
+) =>
+  fetchJson(`/schedules/${scheduleId}/day-programs`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+// Rules
+export const getRules = (params?: { is_active?: boolean; template_type?: string; hard_or_soft?: string }) => {
+  const searchParams = new URLSearchParams();
+  if (params?.is_active !== undefined) searchParams.set("is_active", String(params.is_active));
+  if (params?.template_type) searchParams.set("template_type", params.template_type);
+  if (params?.hard_or_soft) searchParams.set("hard_or_soft", params.hard_or_soft);
+  const qs = searchParams.toString();
+  return fetchJson<Rule[]>(`/rules${qs ? `?${qs}` : ""}`);
+};
+export const createRule = (data: Partial<Rule>) =>
+  fetchJson<Rule>("/rules", { method: "POST", body: JSON.stringify(data) });
+export const updateRule = (ruleId: string, data: Partial<Rule>) =>
+  fetchJson<Rule>(`/rules/${ruleId}`, { method: "PUT", body: JSON.stringify(data) });
+export const toggleRule = (ruleId: string) =>
+  fetchJson<Rule>(`/rules/${ruleId}/toggle`, { method: "PATCH" });
+export const deleteRule = (ruleId: string) =>
+  fetch(`${API_BASE}/rules/${ruleId}`, { method: "DELETE" });
+export const parseRuleFromText = (text: string) =>
+  fetchJson<NlpRuleParseResponse>("/rules/from-text", {
+    method: "POST",
+    body: JSON.stringify({ text }),
+  });
+
+// Events
+export const getEvents = (params?: { status?: string; schedule_id?: string; type_code?: string }) => {
+  const searchParams = new URLSearchParams();
+  if (params?.status) searchParams.set("status", params.status);
+  if (params?.schedule_id) searchParams.set("schedule_id", params.schedule_id);
+  if (params?.type_code) searchParams.set("type_code", params.type_code);
+  const qs = searchParams.toString();
+  return fetchJson<ClinicEvent[]>(`/events${qs ? `?${qs}` : ""}`);
+};
+export const createEvent = (data: Partial<ClinicEvent>) =>
+  fetchJson<ClinicEvent>("/events", { method: "POST", body: JSON.stringify(data) });
+export const parseEventFromText = (text: string, scheduleId?: string) =>
+  fetchJson<NlpParseResponse>("/events/from-text", {
+    method: "POST",
+    body: JSON.stringify({ text, schedule_id: scheduleId }),
+  });
+export const getEvent = (eventId: string) =>
+  fetchJson<ClinicEvent>(`/events/${eventId}`);
+export const updateEvent = (eventId: string, data: Partial<ClinicEvent>) =>
+  fetchJson<ClinicEvent>(`/events/${eventId}`, { method: "PUT", body: JSON.stringify(data) });
+export const deleteEvent = (eventId: string) =>
+  fetch(`${API_BASE}/events/${eventId}`, { method: "DELETE" });
+
+// Solver
+export const runSolver = (scheduleId: string, options?: { time_limit_seconds?: number; clear_unlocked?: boolean }) =>
+  fetchJson<SolveResponse>(`/schedules/${scheduleId}/solve`, {
+    method: "POST",
+    body: JSON.stringify(options || {}),
+  });
+
+// Solver — multi-solution
+export const runMultiSolve = (scheduleId: string, options?: { time_limit_seconds?: number }) =>
+  fetchJson<MultiSolveResponse>(`/schedules/${scheduleId}/solve/solutions`, {
+    method: "POST",
+    body: JSON.stringify(options || {}),
+  });
+export const applySolution = (scheduleId: string, preset: string) =>
+  fetchJson<{ status: string; preset: string; num_assignments: number; message: string }>(
+    `/schedules/${scheduleId}/solve/solutions/${preset}/apply`,
+    { method: "POST" },
+  );
+
+// Violations — AI explain
+export const explainViolations = (scheduleId: string) =>
+  fetchJson<NlpExplainResponse>(`/schedules/${scheduleId}/violations/explain`, {
+    method: "POST",
+  });
+
+// Rules — search
+export const searchRules = (q: string) =>
+  fetchJson<Rule[]>(`/rules/search?q=${encodeURIComponent(q)}`);
+
 // Export
 export const getExportCsvUrl = (scheduleId: string) =>
   `${API_BASE}/schedules/${scheduleId}/export/csv`;
+export const getExportExcelUrl = (scheduleId: string) =>
+  `${API_BASE}/schedules/${scheduleId}/export/excel`;
+export const getExportPdfUrl = (scheduleId: string) =>
+  `${API_BASE}/schedules/${scheduleId}/export/pdf`;
