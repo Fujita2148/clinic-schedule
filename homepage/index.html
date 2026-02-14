@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>株式会社 藤田孔版 | スクリーン印刷・特殊印刷のプロフェッショナル</title>
+  <meta name="description" content="株式会社藤田孔版は、スクリーン印刷・パッド印刷・インクジェットプリンター等、特殊印刷の機械・資材の販売を手掛ける広島の専門企業です。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ========== Reset & Base ========== */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-primary: #0a1628;
+      --color-accent: #2563eb;
+      --color-accent-light: #3b82f6;
+      --color-accent-glow: rgba(37, 99, 235, 0.3);
+      --color-secondary: #f97316;
+      --color-bg: #030712;
+      --color-surface: #111827;
+      --color-surface-2: #1f2937;
+      --color-text: #f9fafb;
+      --color-text-muted: #9ca3af;
+      --color-border: #374151;
+      --font-sans: 'Noto Sans JP', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: var(--color-accent-light);
+      text-decoration: none;
+      transition: color var(--transition);
+    }
+
+    a:hover {
+      color: var(--color-secondary);
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* ========== Utility ========== */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .section {
+      padding: 6rem 0;
+    }
+
+    .section-label {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--color-accent-light);
+      background: rgba(37, 99, 235, 0.1);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-subtitle {
+      font-size: 1.05rem;
+      color: var(--color-text-muted);
+      max-width: 640px;
+      line-height: 1.8;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, var(--color-accent-light), var(--color-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ========== Navigation ========== */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 1rem 0;
+      transition: background var(--transition), backdrop-filter var(--transition), box-shadow var(--transition);
+    }
+
+    .navbar.scrolled {
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    .navbar .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--color-text);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .nav-logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--color-accent), var(--color-secondary));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 1rem;
+      color: white;
+    }
+
+    .nav-links {
+      display: flex;
+      list-style: none;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .nav-links a {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      transition: color var(--transition);
+      position: relative;
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--color-accent-light);
+      transition: width var(--transition);
+    }
+
+    .nav-links a:hover {
+      color: var(--color-text);
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .nav-cta {
+      background: var(--color-accent);
+      color: white !important;
+      padding: 0.55rem 1.4rem;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: background var(--transition), transform var(--transition);
+    }
+
+    .nav-cta:hover {
+      background: var(--color-accent-light);
+      color: white !important;
+      transform: translateY(-1px);
+    }
+
+    .nav-cta::after {
+      display: none !important;
+    }
+
+    .nav-hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 4px;
+    }
+
+    .nav-hamburger span {
+      width: 24px;
+      height: 2px;
+      background: var(--color-text);
+      transition: var(--transition);
+    }
+
+    /* ========== Hero ========== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .hero-bg::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 30% 50%, rgba(37, 99, 235, 0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 30%, rgba(249, 115, 22, 0.06) 0%, transparent 50%);
+      animation: heroGlow 15s ease-in-out infinite alternate;
+    }
+
+    @keyframes heroGlow {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-5%, 3%); }
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 20%, transparent 80%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 20%, transparent 80%);
+    }
+
+    .hero .container {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-content {
+      max-width: 760px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(37, 99, 235, 0.1);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      border-radius: 9999px;
+      padding: 0.4rem 1.2rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--color-accent-light);
+      margin-bottom: 2rem;
+      animation: fadeInUp 0.8s ease forwards;
+    }
+
+    .hero-badge-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--color-accent-light);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4.2rem);
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 0.8s ease 0.1s both;
+    }
+
+    .hero h1 .line-accent {
+      display: block;
+      background: linear-gradient(135deg, var(--color-accent-light) 0%, var(--color-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-description {
+      font-size: 1.1rem;
+      color: var(--color-text-muted);
+      line-height: 1.9;
+      margin-bottom: 2.5rem;
+      max-width: 560px;
+      animation: fadeInUp 0.8s ease 0.2s both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      animation: fadeInUp 0.8s ease 0.3s both;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 2rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition);
+    }
+
+    .btn-primary {
+      background: var(--color-accent);
+      color: white;
+      box-shadow: 0 0 30px var(--color-accent-glow);
+    }
+
+    .btn-primary:hover {
+      background: var(--color-accent-light);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 0 50px var(--color-accent-glow);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--color-accent-light);
+      color: var(--color-accent-light);
+      transform: translateY(-2px);
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 3rem;
+      margin-top: 4rem;
+      animation: fadeInUp 0.8s ease 0.4s both;
+    }
+
+    .hero-stat {
+      text-align: left;
+    }
+
+    .hero-stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--color-text), var(--color-text-muted));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-stat-label {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      margin-top: 0.2rem;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ========== Services Section ========== */
+    .services {
+      background: var(--color-bg);
+      position: relative;
+    }
+
+    .services::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+    }
+
+    .services-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .services-header .section-subtitle {
+      margin: 0 auto;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .service-card {
+      position: relative;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      transition: all var(--transition);
+      overflow: hidden;
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--color-accent), var(--color-secondary));
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    .service-card:hover {
+      border-color: rgba(37, 99, 235, 0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .service-card:hover::before {
+      opacity: 1;
+    }
+
+    .service-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+    }
+
+    .service-icon-screen {
+      background: rgba(37, 99, 235, 0.1);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+
+    .service-icon-pad {
+      background: rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+    }
+
+    .service-icon-inkjet {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .service-icon-material {
+      background: rgba(168, 85, 247, 0.1);
+      border: 1px solid rgba(168, 85, 247, 0.2);
+    }
+
+    .service-icon-consult {
+      background: rgba(236, 72, 153, 0.1);
+      border: 1px solid rgba(236, 72, 153, 0.2);
+    }
+
+    .service-icon-support {
+      background: rgba(234, 179, 8, 0.1);
+      border: 1px solid rgba(234, 179, 8, 0.2);
+    }
+
+    .service-card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .service-card p {
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      line-height: 1.7;
+    }
+
+    /* ========== About Section ========== */
+    .about {
+      position: relative;
+    }
+
+    .about::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+    }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    .about-visual {
+      position: relative;
+    }
+
+    .about-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 20px;
+      padding: 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .about-card::after {
+      content: '';
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.1), transparent 70%);
+    }
+
+    .about-year {
+      font-size: 5rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--color-accent-light) 0%, var(--color-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .about-year-label {
+      font-size: 1rem;
+      color: var(--color-text-muted);
+      margin-bottom: 2rem;
+    }
+
+    .about-features {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .about-feature {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.95rem;
+      color: var(--color-text-muted);
+    }
+
+    .about-feature-check {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: #10b981;
+      flex-shrink: 0;
+    }
+
+    .about-text .section-subtitle {
+      margin-bottom: 2rem;
+    }
+
+    .about-highlights {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .highlight-item {
+      padding: 1.2rem;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+    }
+
+    .highlight-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-accent-light);
+    }
+
+    .highlight-label {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* ========== Strength / Technology Section ========== */
+    .strength {
+      position: relative;
+      background: var(--color-surface);
+    }
+
+    .strength::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+    }
+
+    .strength-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .strength-header .section-subtitle {
+      margin: 0 auto;
+    }
+
+    .strength-items {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+    }
+
+    .strength-item {
+      display: flex;
+      gap: 1.5rem;
+      padding: 2rem;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      transition: all var(--transition);
+    }
+
+    .strength-item:hover {
+      border-color: rgba(37, 99, 235, 0.3);
+    }
+
+    .strength-number {
+      font-size: 2.5rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--color-accent-light), var(--color-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .strength-item h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .strength-item p {
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      line-height: 1.7;
+    }
+
+    /* ========== Company Info Section ========== */
+    .company {
+      position: relative;
+    }
+
+    .company::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+    }
+
+    .company-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+    }
+
+    .company-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .company-table tr {
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .company-table th {
+      text-align: left;
+      padding: 1rem 1.5rem 1rem 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--color-accent-light);
+      white-space: nowrap;
+      width: 120px;
+      vertical-align: top;
+    }
+
+    .company-table td {
+      padding: 1rem 0;
+      font-size: 0.95rem;
+      color: var(--color-text-muted);
+    }
+
+    .company-map {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      overflow: hidden;
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .company-map iframe {
+      width: 100%;
+      height: 100%;
+      min-height: 400px;
+      border: none;
+    }
+
+    .map-placeholder {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .map-placeholder-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .map-placeholder p {
+      color: var(--color-text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* ========== Contact Section ========== */
+    .contact {
+      position: relative;
+      background: var(--color-surface);
+    }
+
+    .contact::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+    }
+
+    .contact-inner {
+      max-width: 700px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .contact-inner .section-subtitle {
+      margin: 0 auto 3rem;
+    }
+
+    .contact-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .contact-card {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      transition: all var(--transition);
+    }
+
+    .contact-card:hover {
+      border-color: rgba(37, 99, 235, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .contact-card-icon {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .contact-card-label {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .contact-card-value {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .contact-note {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      line-height: 1.7;
+    }
+
+    /* ========== Footer ========== */
+    .footer {
+      padding: 3rem 0;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .footer .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-logo {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .footer-logo-icon {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--color-accent), var(--color-secondary));
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 0.75rem;
+      color: white;
+    }
+
+    .footer-copy {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+
+    .footer-links a {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+    }
+
+    .footer-links a:hover {
+      color: var(--color-text);
+    }
+
+    /* ========== Scroll Animations ========== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ========== Responsive ========== */
+    @media (max-width: 1024px) {
+      .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .about-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+      }
+
+      .strength-items {
+        grid-template-columns: 1fr;
+      }
+
+      .company-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .section {
+        padding: 4rem 0;
+      }
+
+      .nav-links {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(3, 7, 18, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        z-index: 999;
+      }
+
+      .nav-links.open {
+        display: flex;
+      }
+
+      .nav-links a {
+        font-size: 1.2rem;
+      }
+
+      .nav-hamburger {
+        display: flex;
+        z-index: 1001;
+      }
+
+      .nav-hamburger.open span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+      }
+
+      .nav-hamburger.open span:nth-child(2) {
+        opacity: 0;
+      }
+
+      .nav-hamburger.open span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+      }
+
+      .services-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-stats {
+        gap: 2rem;
+      }
+
+      .hero-stat-value {
+        font-size: 1.5rem;
+      }
+
+      .contact-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .about-highlights {
+        grid-template-columns: 1fr;
+      }
+
+      .footer .container {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
+      }
+
+      .footer-links {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ========== Navigation ========== -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <div class="nav-logo">
+        <div class="nav-logo-icon">FK</div>
+        藤田孔版
+      </div>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#services" onclick="closeMenu()">事業内容</a></li>
+        <li><a href="#about" onclick="closeMenu()">会社について</a></li>
+        <li><a href="#strength" onclick="closeMenu()">強み</a></li>
+        <li><a href="#company" onclick="closeMenu()">会社概要</a></li>
+        <li><a href="#contact" class="nav-cta" onclick="closeMenu()">お問い合わせ</a></li>
+      </ul>
+      <button class="nav-hamburger" id="hamburger" onclick="toggleMenu()" aria-label="メニュー">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ========== Hero ========== -->
+  <section class="hero" id="hero">
+    <div class="hero-bg">
+      <div class="hero-grid"></div>
+    </div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          Since 1970 - 広島から全国へ
+        </div>
+        <h1>
+          あらゆる素材に、<br>
+          <span class="line-accent">印刷の可能性を。</span>
+        </h1>
+        <p class="hero-description">
+          スクリーン印刷・パッド印刷・インクジェットプリンターなど、
+          特殊印刷の機械・資材の販売を通じて、
+          お客様のものづくりを支えてきた半世紀以上の実績。
+        </p>
+        <div class="hero-actions">
+          <a href="#contact" class="btn btn-primary">
+            お問い合わせ
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a href="#services" class="btn btn-outline">
+            事業内容を見る
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-value">55+</div>
+            <div class="hero-stat-label">年の業界経験</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-value">2</div>
+            <div class="hero-stat-label">拠点（広島・岡山）</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-value">100+</div>
+            <div class="hero-stat-label">取扱製品数</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Services ========== -->
+  <section class="section services" id="services">
+    <div class="container">
+      <div class="services-header reveal">
+        <span class="section-label">Services</span>
+        <h2 class="section-title">事業内容</h2>
+        <p class="section-subtitle">
+          特殊印刷に関する豊富な知識と経験で、<br>お客様の課題解決を支援します。
+        </p>
+      </div>
+      <div class="services-grid">
+        <div class="service-card reveal">
+          <div class="service-icon service-icon-screen">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#3b82f6" stroke-width="2"/><path d="M3 9h18M9 3v18" stroke="#3b82f6" stroke-width="2"/></svg>
+          </div>
+          <h3>スクリーン印刷機器</h3>
+          <p>平面・曲面を問わず、ガラス・プラスチック・金属・布など、あらゆる素材に対応するスクリーン印刷機器を取り扱っています。</p>
+        </div>
+        <div class="service-card reveal">
+          <div class="service-icon service-icon-pad">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="5" stroke="#f97316" stroke-width="2"/><path d="M5 20c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="#f97316" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+          <h3>パッド印刷機器</h3>
+          <p>シリコンパッドを使用し、凹凸のある複雑な形状にも精密な印刷を実現。ボールペン、キャップ、ボタンなど小物への印刷に最適です。</p>
+        </div>
+        <div class="service-card reveal">
+          <div class="service-icon service-icon-inkjet">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6 9V2h12v7" stroke="#10b981" stroke-width="2" stroke-linecap="round"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" stroke="#10b981" stroke-width="2"/><rect x="6" y="14" width="12" height="8" rx="1" stroke="#10b981" stroke-width="2"/></svg>
+          </div>
+          <h3>インクジェットプリンター</h3>
+          <p>産業用インクジェットプリンターによる大判出力・高精細印刷。フィルム出力から大型サイン制作まで幅広く対応します。</p>
+        </div>
+        <div class="service-card reveal">
+          <div class="service-icon service-icon-material">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#a855f7" stroke-width="2" stroke-linejoin="round"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#a855f7" stroke-width="2" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>印刷資材・インク</h3>
+          <p>スクリーンメッシュ、スキージ、各種インク、感光乳剤など、印刷に必要な消耗品・資材を幅広く取り揃えています。</p>
+        </div>
+        <div class="service-card reveal">
+          <div class="service-icon service-icon-consult">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>技術コンサルティング</h3>
+          <p>印刷方式の選定から製版・印刷条件の最適化まで、55年以上の経験に基づく技術的なアドバイスを提供いたします。</p>
+        </div>
+        <div class="service-card reveal">
+          <div class="service-icon service-icon-support">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>アフターサポート</h3>
+          <p>機器導入後の保守・メンテナンスから、トラブルシューティングまで、長期にわたる安心のサポート体制を提供します。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== About ========== -->
+  <section class="section about" id="about">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-visual reveal">
+          <div class="about-card">
+            <div class="about-year">1970</div>
+            <div class="about-year-label">創業年</div>
+            <div class="about-features">
+              <div class="about-feature">
+                <span class="about-feature-check">&#10003;</span>
+                スクリーン印刷機器の販売
+              </div>
+              <div class="about-feature">
+                <span class="about-feature-check">&#10003;</span>
+                パッド印刷機器の販売
+              </div>
+              <div class="about-feature">
+                <span class="about-feature-check">&#10003;</span>
+                インクジェットプリンター販売
+              </div>
+              <div class="about-feature">
+                <span class="about-feature-check">&#10003;</span>
+                印刷用インク・資材の販売
+              </div>
+              <div class="about-feature">
+                <span class="about-feature-check">&#10003;</span>
+                フィルム出力サービス
+              </div>
+              <div class="about-feature">
+                <span class="about-feature-check">&#10003;</span>
+                S-CUBE / JSDPA 業界団体加盟
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="about-text reveal">
+          <span class="section-label">About Us</span>
+          <h2 class="section-title">半世紀を超える<br><span class="gradient-text">印刷技術の探求</span></h2>
+          <p class="section-subtitle">
+            株式会社藤田孔版は1970年の創業以来、スクリーン印刷を中心とした特殊印刷の分野で、
+            機械・資材の販売を通じてお客様のものづくりを支えてまいりました。
+            広島を拠点に岡山にも展開し、中国地方の印刷産業を支える存在として信頼をいただいています。
+          </p>
+          <div class="about-highlights">
+            <div class="highlight-item">
+              <div class="highlight-value">1970年</div>
+              <div class="highlight-label">設立</div>
+            </div>
+            <div class="highlight-item">
+              <div class="highlight-value">1,000万円</div>
+              <div class="highlight-label">資本金</div>
+            </div>
+            <div class="highlight-item">
+              <div class="highlight-value">広島 / 岡山</div>
+              <div class="highlight-label">事業拠点</div>
+            </div>
+            <div class="highlight-item">
+              <div class="highlight-value">JSDPA</div>
+              <div class="highlight-label">業界団体加盟</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Strengths ========== -->
+  <section class="section strength" id="strength">
+    <div class="container">
+      <div class="strength-header reveal">
+        <span class="section-label">Our Strengths</span>
+        <h2 class="section-title">藤田孔版が<span class="gradient-text">選ばれる理由</span></h2>
+        <p class="section-subtitle">
+          長年の経験と専門知識を活かし、最適なソリューションをご提案します。
+        </p>
+      </div>
+      <div class="strength-items">
+        <div class="strength-item reveal">
+          <div class="strength-number">01</div>
+          <div>
+            <h3>55年以上の専門知識</h3>
+            <p>1970年の創業以来培ってきた深い専門知識と豊富な経験で、あらゆる印刷課題に対応。素材・形状・用途に応じた最適な印刷方式をご提案します。</p>
+          </div>
+        </div>
+        <div class="strength-item reveal">
+          <div class="strength-number">02</div>
+          <div>
+            <h3>幅広い製品ラインナップ</h3>
+            <p>スクリーン印刷・パッド印刷・インクジェットプリンターから、インク・メッシュ・スキージまで、印刷に必要なすべてをワンストップで提供します。</p>
+          </div>
+        </div>
+        <div class="strength-item reveal">
+          <div class="strength-number">03</div>
+          <div>
+            <h3>きめ細やかなサポート</h3>
+            <p>機器の選定相談から導入後のメンテナンスまで、お客様に寄り添った手厚いサポートをお約束。トラブル時も迅速に対応いたします。</p>
+          </div>
+        </div>
+        <div class="strength-item reveal">
+          <div class="strength-number">04</div>
+          <div>
+            <h3>業界ネットワーク</h3>
+            <p>S-CUBEをはじめとする業界団体への参画を通じ、最新の技術動向をキャッチ。常に最先端のソリューションをお届けします。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Company Info ========== -->
+  <section class="section company" id="company">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">Company</span>
+        <h2 class="section-title">会社概要</h2>
+      </div>
+      <div class="company-grid">
+        <div class="reveal">
+          <table class="company-table">
+            <tr>
+              <th>会社名</th>
+              <td>株式会社 藤田孔版</td>
+            </tr>
+            <tr>
+              <th>設立</th>
+              <td>1970年6月</td>
+            </tr>
+            <tr>
+              <th>資本金</th>
+              <td>1,000万円</td>
+            </tr>
+            <tr>
+              <th>本社所在地</th>
+              <td>〒730-0055<br>広島県広島市中区南千田西町2-45</td>
+            </tr>
+            <tr>
+              <th>岡山営業所</th>
+              <td>岡山県岡山市中区</td>
+            </tr>
+            <tr>
+              <th>電話番号</th>
+              <td>082-243-0775</td>
+            </tr>
+            <tr>
+              <th>事業内容</th>
+              <td>スクリーン印刷・パッド印刷・インクジェットプリンター等、特殊印刷の機械・資材の販売</td>
+            </tr>
+            <tr>
+              <th>加盟団体</th>
+              <td>S-CUBE / JSDPA（日本スクリーン印刷協会）</td>
+            </tr>
+          </table>
+        </div>
+        <div class="company-map reveal">
+          <div class="map-placeholder">
+            <div class="map-placeholder-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="#3b82f6" stroke-width="2"/><circle cx="12" cy="10" r="3" stroke="#3b82f6" stroke-width="2"/></svg>
+            </div>
+            <p><strong>広島県広島市中区南千田西町2-45</strong></p>
+            <p style="margin-top: 0.5rem; font-size: 0.85rem;">広島電鉄 御幸橋電停より徒歩圏内</p>
+            <a href="https://maps.google.com/?q=広島県広島市中区南千田西町2-45" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="margin-top: 1.5rem; display: inline-flex;">
+              Google Mapで開く
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 12L12 4M12 4H5M12 4v7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Contact ========== -->
+  <section class="section contact" id="contact">
+    <div class="container">
+      <div class="contact-inner">
+        <div class="reveal">
+          <span class="section-label">Contact</span>
+          <h2 class="section-title">お問い合わせ</h2>
+          <p class="section-subtitle">
+            印刷に関するご相談・機器のお見積もりなど、お気軽にお問い合わせください。
+          </p>
+        </div>
+        <div class="contact-cards reveal">
+          <div class="contact-card">
+            <div class="contact-card-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="contact-card-label">お電話</div>
+            <div class="contact-card-value">082-243-0775</div>
+          </div>
+          <div class="contact-card">
+            <div class="contact-card-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="#f97316" stroke-width="2"/><circle cx="12" cy="10" r="3" stroke="#f97316" stroke-width="2"/></svg>
+            </div>
+            <div class="contact-card-label">所在地</div>
+            <div class="contact-card-value">広島市中区</div>
+          </div>
+        </div>
+        <div class="contact-note reveal">
+          営業時間：平日 9:00 〜 17:00（土日祝休み）<br>
+          お電話またはご来社にてお問い合わせを承っております。<br>
+          機器のデモンストレーションも随時受付中です。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Footer ========== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-logo">
+        <div class="footer-logo-icon">FK</div>
+        藤田孔版
+      </div>
+      <ul class="footer-links">
+        <li><a href="#services">事業内容</a></li>
+        <li><a href="#about">会社について</a></li>
+        <li><a href="#company">会社概要</a></li>
+        <li><a href="#contact">お問い合わせ</a></li>
+      </ul>
+      <div class="footer-copy">&copy; 2025 株式会社 藤田孔版. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <!-- ========== Scripts ========== -->
+  <script>
+    // Navbar scroll effect
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // Mobile menu
+    function toggleMenu() {
+      document.getElementById('navLinks').classList.toggle('open');
+      document.getElementById('hamburger').classList.toggle('open');
+    }
+
+    function closeMenu() {
+      document.getElementById('navLinks').classList.remove('open');
+      document.getElementById('hamburger').classList.remove('open');
+    }
+
+    // Scroll reveal
+    const revealElements = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.classList.add('visible');
+          }, index * 80);
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    revealElements.forEach(el => revealObserver.observe(el));
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          const offset = 80;
+          const y = target.getBoundingClientRect().top + window.pageYOffset - offset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
